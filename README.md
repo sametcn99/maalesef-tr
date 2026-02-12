@@ -1,6 +1,6 @@
 # maalesef
 
-**maalesef**, iş başvurusu süreçlerini daha şeffaf, topluluk odaklı ve anlamlı hale getirmeyi amaçlayan kurgusal bir platformdur. Kurgusal deneyim barındırır.
+**maalesef**, iş başvurusu süreçlerini daha şeffaf, topluluk odaklı ve anlamlı hale getirmeyi amaçlayan kurgusal bir platformdur.
 
 [Web Sitesi](https://maalesef.com) | [GitHub](https://sametcc.me/repo/maalesef-tr) | [Katkıda Bulun](CONTRIBUTING.md)
 
