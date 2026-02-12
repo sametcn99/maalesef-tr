@@ -1,6 +1,8 @@
 # maalesef
 
-**maalesef**, iş başvurusu süreçlerini daha şeffaf, topluluk odaklı ve anlamlı hale getirmeyi amaçlayan bir platformdur.
+**maalesef**, iş başvurusu süreçlerini daha şeffaf, topluluk odaklı ve anlamlı hale getirmeyi amaçlayan bir platformdur. Kurgusal deneyim barındırır.
+
+[Web Sitesi](https://maalesef.com) | [GitHub](https://sametcc.me/repo/maalesef-tr) | [Contributing](CONTRIBUTING.md)
 
 ## Özellikler
 
@@ -14,7 +16,7 @@
 
 Bu proje modern bir monorepo mimarisi üzerine kurulu olup aşağıdaki teknolojileri kullanır:
 
-- **Çalışma Zamanı (Runtime):** [Bun](https://bun.sh)
+- **Runtime:** [Bun](https://bun.sh)
 - **Paket Yönetimi & Monorepo:** TurboRepo Workspaces
 - **Frontend:** Next.js 16 (App Router), React 19, Tailwind CSS v4, Radix UI Themes, Framer Motion
 - **Backend:** NestJS, TypeORM, PostgreSQL, Passport JWT
