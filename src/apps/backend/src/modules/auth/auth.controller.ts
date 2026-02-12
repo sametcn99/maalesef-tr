@@ -24,7 +24,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import type { Response, Request } from 'express';
+import type { Response, Request, CookieOptions } from 'express';
 import { AuthService } from './auth.service.js';
 import {
   RegisterDto,
@@ -150,9 +150,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     await this.authService.logout(userId);
-    res.clearCookie('refreshToken', {
-      path: '/api/auth',
-    });
+    res.clearCookie('refreshToken', this.getRefreshTokenCookieOptions());
     return { message: 'Başarıyla çıkış yapıldı.' };
   }
 
@@ -218,11 +216,19 @@ export class AuthController {
 
   private setRefreshTokenCookie(res: Response, refreshToken: string) {
     res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production',
-      sameSite: 'lax',
-      path: '/api/auth',
+      ...this.getRefreshTokenCookieOptions(),
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
+  }
+
+  private getRefreshTokenCookieOptions(): CookieOptions {
+    const isProduction = this.configService.get('NODE_ENV') === 'production';
+
+    return {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
+    };
   }
 }

@@ -4,18 +4,31 @@ import type { Application, CreateJobPayload, Job, Notification } from "@/types";
 const BASE_URL = env.NEXT_PUBLIC_API_URL;
 
 let accessTokenCache: string | null = null;
-let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
+let refreshPromise: Promise<string> | null = null;
 
 export function setAccessToken(token: string | null) {
   accessTokenCache = token;
 }
 
-function onRefreshed(token: string) {
-  refreshSubscribers.forEach((callback) => {
-    callback(token);
-  });
-  refreshSubscribers = [];
+async function refreshAccessToken(): Promise<string> {
+  if (!refreshPromise) {
+    refreshPromise = request<{ accessToken: string }>("/auth/refresh", {
+      method: "POST",
+    })
+      .then((result) => {
+        setAccessToken(result.accessToken);
+        return result.accessToken;
+      })
+      .catch(() => {
+        setAccessToken(null);
+        throw { status: 401, message: "Oturum süresi doldu." };
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -45,27 +58,14 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
     // Transparent refresh for 401s (except on auth endpoints themselves)
     if (res.status === 401 && !path.startsWith("/auth/")) {
-      if (!isRefreshing) {
-        isRefreshing = true;
-        try {
-          const result = await refresh();
-          setAccessToken(result.accessToken);
-          isRefreshing = false;
-          onRefreshed(result.accessToken);
-        } catch (_refreshErr) {
-          isRefreshing = false;
-          refreshSubscribers = [];
-          setAccessToken(null);
-          throw { status: 401, message: "Oturum süresi doldu." };
-        }
+      try {
+        await refreshAccessToken();
+      } catch {
+        throw { status: 401, message: "Oturum süresi doldu." };
       }
 
-      return new Promise<T>((resolve, reject) => {
-        refreshSubscribers.push((_token) => {
-          // Retry the original request
-          request<T>(path, options).then(resolve).catch(reject);
-        });
-      });
+      // Retry the original request with refreshed access token
+      return request<T>(path, options);
     }
 
     if (res.status === 401) {
@@ -84,7 +84,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export async function refresh(): Promise<{ accessToken: string }> {
-  return request<{ accessToken: string }>("/auth/refresh", { method: "POST" });
+  const accessToken = await refreshAccessToken();
+  return { accessToken };
 }
 
 export async function logout(): Promise<void> {
