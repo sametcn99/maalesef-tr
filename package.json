@@ -1,0 +1,25 @@
+{
+  "name": "maalesef",
+  "module": "index.ts",
+  "type": "module",
+  "packageManager": "bun@1.3.8",
+  "workspaces": [
+    "src/apps/*"
+  ],
+  "private": true,
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "format": "turbo format",
+    "check": "turbo check",
+    "start": "turbo start"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.9",
+    "turbo": "^2.8.7"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

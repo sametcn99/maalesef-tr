@@ -1,0 +1,45 @@
+FROM oven/bun:1.3.8-slim AS base
+WORKDIR /app
+
+# Install production dependencies for runtime
+FROM base AS deps
+COPY package.json bun.lock turbo.json tsconfig.json ./
+COPY src/apps/backend/package.json src/apps/backend/package.json
+COPY src/apps/frontend/package.json src/apps/frontend/package.json
+RUN bun install --frozen-lockfile --production --cwd src/apps/backend
+
+# Install all dependencies (including dev) for building
+FROM base AS devdeps
+COPY package.json bun.lock turbo.json tsconfig.json ./
+COPY src/apps/backend/package.json src/apps/backend/package.json
+COPY src/apps/frontend/package.json src/apps/frontend/package.json
+RUN bun install --frozen-lockfile --cwd src/apps/backend
+
+# Build the backend
+FROM node:22-slim AS builder
+WORKDIR /app
+# Bun stores actual packages in /app/node_modules/.bun and links workspace node_modules to it.
+# Copy the store so links inside src/apps/backend/node_modules resolve correctly.
+COPY --from=devdeps /app/node_modules/.bun ./node_modules/.bun
+COPY --from=devdeps /app/src/apps/backend/node_modules ./src/apps/backend/node_modules
+COPY . .
+WORKDIR /app/src/apps/backend
+RUN node ./node_modules/@nestjs/cli/bin/nest.js build
+
+# Runtime image (Bun)
+FROM oven/bun:1.3.8-slim AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+# Copy production deps, compiled output, and minimal metadata
+COPY --from=deps /app/node_modules/.bun ./node_modules/.bun
+COPY --from=deps /app/src/apps/backend/node_modules ./src/apps/backend/node_modules
+COPY --from=builder /app/src/apps/backend/dist ./src/apps/backend/dist
+COPY src/apps/backend/package.json ./src/apps/backend/package.json
+
+# Drop privileges to the built-in bun user
+RUN chown -R bun:bun /app
+USER bun
+
+EXPOSE 3001
+CMD ["bun", "src/apps/backend/dist/main.js"]

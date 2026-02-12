@@ -1,0 +1,39 @@
+FROM oven/bun:1.3.8-slim AS base
+WORKDIR /app
+
+# Install dependencies (workspace-aware)
+FROM base AS deps
+COPY package.json bun.lock turbo.json tsconfig.json ./
+COPY src/apps/backend/package.json src/apps/backend/package.json
+COPY src/apps/frontend/package.json src/apps/frontend/package.json
+RUN bun install --frozen-lockfile --cwd src/apps/frontend
+
+# Build the Next.js app
+FROM node:22-slim AS builder
+WORKDIR /app
+# Bun stores actual packages in /app/node_modules/.bun and links workspace node_modules to it.
+# Copy the store so links inside src/apps/frontend/node_modules resolve correctly.
+COPY --from=deps /app/node_modules/.bun ./node_modules/.bun
+COPY --from=deps /app/src/apps/frontend/node_modules ./src/apps/frontend/node_modules
+COPY . .
+WORKDIR /app/src/apps/frontend
+ARG NEXT_PUBLIC_API_URL=http://localhost:3001
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN node ./node_modules/next/dist/bin/next build
+
+# Runtime image uses the standalone output (Bun runtime)
+FROM oven/bun:1.3.8-slim AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+COPY --from=builder /app/src/apps/frontend/.next/standalone ./
+COPY --from=builder /app/src/apps/frontend/.next/static ./src/apps/frontend/.next/static
+COPY --from=builder /app/src/apps/frontend/public ./src/apps/frontend/public
+
+EXPOSE 3000
+USER bun
+WORKDIR /app/src/apps/frontend
+CMD ["bun","run", "server.js"]
