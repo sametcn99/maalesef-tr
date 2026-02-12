@@ -26,38 +26,6 @@ export function Footer() {
               Samimi kariyer platformu. Hayallerinizdeki ret cevabına giden en
               kısa yol.
             </p>
-            {/* <div className="flex space-x-5">
-              <a
-                href="https://x.com/maaleseftr"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted transition-colors hover:text-accent"
-                title="X (Twitter)"
-              >
-                <Twitter className="h-5 w-5" />
-                <span className="sr-only">Twitter</span>
-              </a>
-              <a
-                href="https://linkedin.com/company/maaleseftr"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted transition-colors hover:text-accent"
-                title="LinkedIn"
-              >
-                  <Linkedin className="h-5 w-5" />
-                <span className="sr-only">LinkedIn</span>
-              </a>
-              <a
-                href="https://github.com/maaleseftr"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted transition-colors hover:text-accent"
-                title="GitHub"
-              >
-                <Github className="h-5 w-5" />
-                <span className="sr-only">GitHub</span>
-              </a>
-            </div> */}
           </div>
 
           {/* Navigation Links */}
@@ -114,7 +82,8 @@ export function Footer() {
                   <li>
                     <Link
                       data-umami-event="layout_footer_go_mailto_contact_sametcc_me_click"
-                      href="mailto:contact@sametcc.me"
+                      href="https://sametcc.me"
+                      target="_blank"
                       className="text-sm leading-6 text-muted transition-colors hover:text-foreground"
                     >
                       İletişim
