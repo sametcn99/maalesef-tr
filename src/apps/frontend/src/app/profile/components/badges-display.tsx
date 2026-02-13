@@ -19,7 +19,7 @@ const BADGE_TYPE_COLORS: Record<string, string> = {
 };
 
 const BADGE_TYPE_LABELS: Record<string, string> = {
-  REJECTION: "Red Rozeti",
+  REJECTION: "Ret Rozeti",
   SHARE: "Paylaşım Rozeti",
   JOB_POST: "İlan Rozeti",
 };
