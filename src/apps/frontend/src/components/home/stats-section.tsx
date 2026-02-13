@@ -12,7 +12,7 @@ export function StatsSection({ stats, loading }: StatsSectionProps) {
     ? `${new Intl.NumberFormat("en-US", {
         notation: "compact",
         maximumFractionDigits: 1,
-      }).format(stats.rejectedCount)}+`
+      }).format(stats.rejectedCount)}`
     : "...";
 
   return (
