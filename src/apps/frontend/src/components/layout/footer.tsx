@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { siGithub, siX } from "simple-icons";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -26,6 +27,40 @@ export function Footer() {
               Samimi kariyer platformu. Hayallerinizdeki ret cevabına giden en
               kısa yol.
             </p>
+            <div className="flex space-x-5">
+              <Link
+                href="https://x.com/maaleseftr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted transition-colors hover:text-accent"
+                title="X (Twitter)"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  className="h-5 w-5 fill-current"
+                >
+                  <path d={siX.path} />
+                </svg>
+                <span className="sr-only">X (Twitter)</span>
+              </Link>
+              <Link
+                href="https://sametcc.me/repo/maalesef-tr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted transition-colors hover:text-accent"
+                title="GitHub"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  className="h-5 w-5 fill-current"
+                >
+                  <path d={siGithub.path} />
+                </svg>
+                <span className="sr-only">GitHub</span>
+              </Link>
+            </div>
           </div>
 
           {/* Navigation Links */}
