@@ -29,6 +29,7 @@ export function Footer() {
             </p>
             <div className="flex space-x-5">
               <Link
+                data-umami-event="layout_footer_go_x_com_maaleseftr_click"
                 href="https://x.com/maaleseftr"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -45,6 +46,7 @@ export function Footer() {
                 <span className="sr-only">X (Twitter)</span>
               </Link>
               <Link
+                data-umami-event="layout_footer_go_github_maalesef_tr_click"
                 href="https://sametcc.me/repo/maalesef-tr"
                 target="_blank"
                 rel="noopener noreferrer"
