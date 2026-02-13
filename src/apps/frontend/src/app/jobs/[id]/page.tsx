@@ -51,7 +51,7 @@ export default function JobDetailPage({
     }
   }
 
-  if (loading) {
+  if (loading && !job) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
         <DetailSkeleton />
@@ -86,7 +86,7 @@ export default function JobDetailPage({
           {/* Header */}
           <div>
             <div className="flex items-start gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-light text-lg font-bold text-white shadow-lg shadow-accent/20">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-accent to-accent-light text-lg font-bold text-white shadow-lg shadow-accent/20">
                 {job.company.charAt(0).toUpperCase()}
               </div>
               <div>
@@ -203,7 +203,7 @@ export default function JobDetailPage({
         </div>
 
         {/* Sidebar — Apply */}
-        <div className="lg:w-[380px]">
+        <div className="lg:w-95">
           <div className="sticky top-24 space-y-4">
             {/* Disclaimer Box */}
             <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 text-amber-900 shadow-sm">
@@ -234,7 +234,7 @@ export default function JobDetailPage({
                 data-umami-event="jobs_job_login_click"
                 onClick={handleApply}
                 size="3"
-                className="h-12 w-full bg-gradient-to-r from-accent to-accent-light font-semibold text-white shadow-lg shadow-accent/25 transition-all duration-200 hover:shadow-xl hover:shadow-accent/30 hover:scale-[1.01]"
+                className="h-12 w-full bg-linear-to-r from-accent to-accent-light font-semibold text-white shadow-lg shadow-accent/25 transition-all duration-200 hover:shadow-xl hover:shadow-accent/30 hover:scale-[1.01]"
               >
                 <span className="inline-flex items-center gap-2">
                   <Send size={16} />

@@ -29,7 +29,7 @@ export function JobPreviewModal({
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Content className="max-w-3xl border border-border shadow-xl">
         <Dialog.Title className="flex items-start gap-4 pb-2 text-lg font-semibold text-foreground">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-light text-base font-bold text-white shadow-md shadow-accent/20">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-accent to-accent-light text-base font-bold text-white shadow-md shadow-accent/20">
             {job.company.charAt(0).toUpperCase()}
           </div>
           <div>
@@ -117,7 +117,7 @@ export function JobPreviewModal({
             data-umami-event="job_preview_open_detail_click"
             asChild
             size="3"
-            className="bg-gradient-to-r from-accent to-accent-light font-semibold text-white shadow-md shadow-accent/20"
+            className="bg-linear-to-r from-accent to-accent-light font-semibold text-white shadow-md shadow-accent/20"
           >
             <Link
               data-umami-event="job_preview_open_detail_link_click"

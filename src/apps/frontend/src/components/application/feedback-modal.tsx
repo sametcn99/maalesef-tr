@@ -26,8 +26,8 @@ export function FeedbackModal({
           <div
             className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white ${
               isRejected
-                ? "bg-gradient-to-br from-red-500 to-red-600"
-                : "bg-gradient-to-br from-amber-500 to-amber-600"
+                ? "bg-linear-to-br from-red-500 to-red-600"
+                : "bg-linear-to-br from-amber-500 to-amber-600"
             }`}
           >
             {application.jobTitle.charAt(0).toUpperCase()}

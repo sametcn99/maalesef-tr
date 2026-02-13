@@ -107,7 +107,7 @@ export function ProfileHeader({ user }: ProfileHeaderProps) {
 
   return (
     <div className="flex items-start gap-4">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-light text-lg font-bold text-white shadow-lg shadow-accent/20">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-accent to-accent-light text-lg font-bold text-white shadow-lg shadow-accent/20">
         <UserIcon size={24} />
       </div>
       <div>

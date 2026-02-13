@@ -45,7 +45,7 @@ function LoginForm() {
 
       <div className="animate-fade-in-up relative w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-light shadow-lg shadow-accent/25 transition-transform hover:scale-105">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-accent to-accent-light shadow-lg shadow-accent/25 transition-transform hover:scale-105">
             <LogIn size={28} className="text-white" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -140,7 +140,7 @@ function LoginForm() {
               type="submit"
               disabled={loading}
               size="3"
-              className="group mt-8 h-12 w-full bg-gradient-to-r from-accent to-accent-light font-bold text-white shadow-lg shadow-accent/25 transition-all duration-300 hover:shadow-xl hover:shadow-accent/30 hover:scale-[1.02]"
+              className="group mt-8 h-12 w-full bg-linear-to-r from-accent to-accent-light font-bold text-white shadow-lg shadow-accent/25 transition-all duration-300 hover:shadow-xl hover:shadow-accent/30 hover:scale-[1.02]"
             >
               <span className="inline-flex items-center gap-2">
                 {loading ? (

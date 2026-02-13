@@ -12,8 +12,10 @@ import Link from "next/link";
 
 export default function JobsPage() {
   const { jobs, loading, error } = useJobs();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [search, setSearch] = useState("");
+  const isInitialLoading = loading && jobs.length === 0;
+  const canPublishJob = !authLoading && isAuthenticated;
 
   const filtered = useMemo(() => {
     if (!search.trim()) return jobs;
@@ -29,7 +31,7 @@ export default function JobsPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
       {/* Page header */}
-      <div className="animate-fade-in mb-10">
+      <div className="mb-10">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">
@@ -40,7 +42,7 @@ export default function JobsPage() {
             </p>
           </div>
           <div className="flex flex-col gap-3 w-full sm:w-auto sm:flex-row sm:items-center">
-            {isAuthenticated && (
+            {canPublishJob && (
               <Button
                 data-umami-event="jobs_go_jobs_new_click"
                 asChild
@@ -90,7 +92,7 @@ export default function JobsPage() {
           </div>
         </div>
 
-        {!loading && jobs.length > 0 && (
+        {!isInitialLoading && jobs.length > 0 && (
           <div className="mt-4 flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-muted px-3 py-1 text-xs font-medium text-accent">
               <Briefcase size={12} />
@@ -116,8 +118,8 @@ export default function JobsPage() {
 
       {error && <ErrorCard message={error} />}
 
-      {loading ? (
-        <div className="stagger-children grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+      {isInitialLoading ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
           {Array.from({ length: 6 }).map((_, i) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: Skeletons
             <JobCardSkeleton key={`job-skeleton-${i}`} />
@@ -138,7 +140,7 @@ export default function JobsPage() {
           }
         />
       ) : (
-        <div className="stagger-children grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           {filtered.map((job) => (
             <JobCard key={job.id} job={job} />
           ))}

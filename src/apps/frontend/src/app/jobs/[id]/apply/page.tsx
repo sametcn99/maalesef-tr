@@ -117,7 +117,7 @@ export default function ApplyPage({
         {/* Header */}
         <div>
           <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-light text-lg font-bold text-white shadow-lg shadow-accent/20">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-accent to-accent-light text-lg font-bold text-white shadow-lg shadow-accent/20">
               {job.company.charAt(0).toUpperCase()}
             </div>
             <div>
@@ -277,7 +277,7 @@ export default function ApplyPage({
             onClick={handleSubmit}
             disabled={!isFormValid() || submitting}
             size="3"
-            className="h-12 w-full bg-gradient-to-r from-accent to-accent-light font-semibold text-white shadow-lg shadow-accent/25 transition-all duration-200 hover:shadow-xl hover:shadow-accent/30 hover:scale-[1.01] disabled:opacity-40 disabled:shadow-none"
+            className="h-12 w-full bg-linear-to-r from-accent to-accent-light font-semibold text-white shadow-lg shadow-accent/25 transition-all duration-200 hover:shadow-xl hover:shadow-accent/30 hover:scale-[1.01] disabled:opacity-40 disabled:shadow-none"
           >
             <span className="inline-flex items-center gap-2">
               {submitting ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import type { Job } from "@/types";
 import { getJobs, getJob, getMyJobs, deleteJob } from "@/lib/api";
 import { useJobPosting } from "@/context/job-posting-context";
@@ -10,17 +10,25 @@ export function useJobs() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { userJobs } = useJobPosting();
+  const hasLoadedOnce = useRef(false);
 
   const fetchJobs = useCallback(async () => {
+    const shouldShowLoading = !hasLoadedOnce.current;
+
     try {
-      setLoading(true);
+      if (shouldShowLoading) {
+        setLoading(true);
+      }
       setError(null);
       const data = await getJobs();
       setApiJobs(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "İlanlar yüklenemedi");
     } finally {
-      setLoading(false);
+      hasLoadedOnce.current = true;
+      if (shouldShowLoading) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -81,21 +89,36 @@ export function useJob(id: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { userJobs } = useJobPosting();
+  const hasLoadedOnce = useRef(false);
+  const lastJobId = useRef<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+
+    if (lastJobId.current !== id) {
+      lastJobId.current = id;
+      hasLoadedOnce.current = false;
+      setLoading(true);
+      setError(null);
+      setJob(null);
+    }
 
     // First check user-created jobs (id parameter could be uuid or slug)
     const userJob = userJobs.find((j) => j.id === id || j.slug === id);
     if (userJob) {
       setJob(userJob);
       setLoading(false);
+      hasLoadedOnce.current = true;
       return;
     }
 
     async function fetchJob() {
+      const shouldShowLoading = !hasLoadedOnce.current;
+
       try {
-        setLoading(true);
+        if (shouldShowLoading) {
+          setLoading(true);
+        }
         setError(null);
         const data = await getJob(id);
         if (!cancelled) setJob(data);
@@ -104,7 +127,12 @@ export function useJob(id: string) {
           setError(err instanceof Error ? err.message : "İlan yüklenemedi");
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          hasLoadedOnce.current = true;
+          if (shouldShowLoading) {
+            setLoading(false);
+          }
+        }
       }
     }
 

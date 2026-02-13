@@ -13,9 +13,9 @@ interface BadgesDisplayProps {
 }
 
 const BADGE_TYPE_COLORS: Record<string, string> = {
-  REJECTION: "bg-gradient-to-br from-purple-500 to-pink-500",
-  SHARE: "bg-gradient-to-br from-blue-500 to-cyan-500",
-  JOB_POST: "bg-gradient-to-br from-amber-500 to-orange-500",
+  REJECTION: "bg-linear-to-br from-purple-500 to-pink-500",
+  SHARE: "bg-linear-to-br from-blue-500 to-cyan-500",
+  JOB_POST: "bg-linear-to-br from-amber-500 to-orange-500",
 };
 
 const BADGE_TYPE_LABELS: Record<string, string> = {
@@ -55,7 +55,7 @@ export function BadgesDisplay({ badges }: BadgesDisplayProps) {
               <div
                 className={`flex-shrink-0 w-12 h-12 rounded-full ${
                   BADGE_TYPE_COLORS[badge.type] ||
-                  "bg-gradient-to-br from-gray-500 to-gray-600"
+                  "bg-linear-to-br from-gray-500 to-gray-600"
                 } flex items-center justify-center shadow-lg`}
               >
                 <Award className="w-6 h-6 text-white" />

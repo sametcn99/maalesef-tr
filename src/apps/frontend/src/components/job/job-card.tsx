@@ -41,7 +41,7 @@ export function JobCard({ job }: JobCardProps) {
       className="group relative block overflow-hidden rounded-xl border border-border bg-surface transition-all duration-300 hover:border-accent/30 hover:shadow-xl hover:shadow-accent/5 hover:-translate-y-0.5 cursor-pointer"
     >
       {/* Accent top line */}
-      <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-accent/0 to-transparent transition-all duration-300 group-hover:via-accent" />
+      <div className="absolute inset-x-0 top-0 h-[2px] bg-linear-to-r from-transparent via-accent/0 to-transparent transition-all duration-300 group-hover:via-accent" />
 
       <div className="gap-4 p-6">
         <div className="flex items-start justify-between">

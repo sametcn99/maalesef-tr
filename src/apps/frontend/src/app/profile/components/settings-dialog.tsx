@@ -261,7 +261,7 @@ export function SettingsDialog({
         </div>
 
         {/* Danger zone */}
-        <div className="mt-6 rounded-2xl border border-red-100 bg-gradient-to-br from-red-50 via-white to-amber-50 p-5">
+        <div className="mt-6 rounded-2xl border border-red-100 bg-linear-to-br from-red-50 via-white to-amber-50 p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 rounded-full bg-red-100 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-red-700">
