@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { siGithub, siX } from "simple-icons";
+import { FaGithub, FaLinkedin, FaXTwitter } from "react-icons/fa6";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -36,14 +36,19 @@ export function Footer() {
                 className="text-muted transition-colors hover:text-accent"
                 title="X (Twitter)"
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  className="h-5 w-5 fill-current"
-                >
-                  <path d={siX.path} />
-                </svg>
+                <FaXTwitter aria-hidden="true" className="h-5 w-5" />
                 <span className="sr-only">X (Twitter)</span>
+              </Link>
+              <Link
+                data-umami-event="layout_footer_go_linkedin_company_maaleseftr_click"
+                href="https://www.linkedin.com/company/maaleseftr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted transition-colors hover:text-accent"
+                title="LinkedIn"
+              >
+                <FaLinkedin aria-hidden="true" className="h-5 w-5" />
+                <span className="sr-only">LinkedIn</span>
               </Link>
               <Link
                 data-umami-event="layout_footer_go_github_maalesef_tr_click"
@@ -53,13 +58,7 @@ export function Footer() {
                 className="text-muted transition-colors hover:text-accent"
                 title="GitHub"
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  className="h-5 w-5 fill-current"
-                >
-                  <path d={siGithub.path} />
-                </svg>
+                <FaGithub aria-hidden="true" className="h-5 w-5" />
                 <span className="sr-only">GitHub</span>
               </Link>
             </div>
