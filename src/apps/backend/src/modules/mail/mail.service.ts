@@ -142,7 +142,7 @@ export class MailService {
               </a>
               <a href="https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(shareMessage)}" 
                  style="display: inline-block; padding: 8px 16px; background-color: #0077b5; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 500; font-size: 12px; margin: 0 4px;">
-                LinkedIn
+                LinkedIn'de Paylaş
               </a>
             </div>
           </div>

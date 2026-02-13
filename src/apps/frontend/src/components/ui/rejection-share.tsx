@@ -106,7 +106,7 @@ export function RejectionShare({ message: propMessage }: RejectionShareProps) {
           className="inline-flex h-8 items-center gap-2 rounded-lg bg-[#0077b5] text-[12px] font-medium text-white px-3 transition hover:bg-[#0077b5]/80"
         >
           <Linkedin size={14} />
-          Linkedin
+          Linkedin'de Paylaş
         </button>
       </div>
     </div>
