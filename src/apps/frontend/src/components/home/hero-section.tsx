@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@radix-ui/themes";
-import { ArrowRight, Shield, Clock, XCircle, ChevronDown } from "lucide-react";
+import { Shield, Clock, XCircle, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import {
   type Variants,
@@ -231,17 +231,18 @@ export function HeroSection() {
                 className="inline-flex items-center gap-2"
               >
                 İlanlara Gözatın
-                <motion.span
-                  animate={{ x: [0, 4, 0] }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Number.POSITIVE_INFINITY,
-                    ease: "easeInOut",
-                  }}
-                >
-                  <ArrowRight size={20} />
-                </motion.span>
               </Link>
+            </Button>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}>
+            <Button
+              data-umami-event="home_hero_section_about_click"
+              asChild
+              size="3"
+              variant="soft"
+              className="h-12 px-6 rounded-full border border-border/70 text-foreground hover:text-foreground"
+            >
+              <Link href="/about">Amaç ne?</Link>
             </Button>
           </motion.div>
         </motion.div>
