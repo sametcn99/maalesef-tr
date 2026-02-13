@@ -20,7 +20,7 @@ export function Footer() {
                 className="rounded-lg shadow-sm"
               />
               <span className="text-xl font-bold tracking-tight text-foreground transition-colors hover:text-accent">
-                maalesef
+                maalesef.
               </span>
             </div>
             <p className="max-w-xs text-sm leading-6 text-muted">

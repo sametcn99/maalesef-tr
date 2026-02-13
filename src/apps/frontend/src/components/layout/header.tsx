@@ -54,7 +54,7 @@ export function Header() {
               className="rounded-lg"
             />
             <span className="text-lg font-semibold tracking-tight text-foreground transition-colors duration-200 group-hover:text-accent">
-              maalesef
+              maalesef.
             </span>
           </Link>
         </div>
