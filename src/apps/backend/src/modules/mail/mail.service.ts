@@ -58,7 +58,7 @@ export class MailService {
   }
 
   private buildVerificationUrl(token: string): string {
-    const url = new URL('/api/auth/verify-email/', this.appUrl);
+    const url = new URL('/auth/verify-email/', this.appUrl);
     url.pathname = url.pathname.endsWith('/')
       ? `${url.pathname}${token}`
       : `${url.pathname}/${token}`;
