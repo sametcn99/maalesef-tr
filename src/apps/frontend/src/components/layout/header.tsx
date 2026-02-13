@@ -2,12 +2,15 @@
 
 import { Button, DropdownMenu, Skeleton } from "@radix-ui/themes";
 import { Bell, LogIn, LogOut, Menu, User, X, Plus } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { FaGithub, FaLinkedin, FaXTwitter } from "react-icons/fa6";
 import { useState } from "react";
-import { useNotifications } from "@/hooks";
-import { useAuth } from "@/context/auth-context";
 import Image from "next/image";
+import { createPortal } from "react-dom";
+import { useAuth } from "@/context/auth-context";
+import { useNotifications } from "@/hooks";
 
 const navItems = [{ label: "İlanlar", href: "/jobs", requiresAuth: false }];
 
@@ -17,6 +20,7 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isAuthenticated, user, logout, isLoading } = useAuth();
   const { unreadCount } = useNotifications();
+  const currentYear = new Date().getFullYear();
 
   function handleLogout() {
     logout();
@@ -122,7 +126,7 @@ export function Header() {
                   <DropdownMenu.Content
                     variant="soft"
                     align="end"
-                    className="min-w-[160px]"
+                    className="min-w-40"
                   >
                     <DropdownMenu.Item asChild>
                       <Link
@@ -179,101 +183,221 @@ export function Header() {
         </div>
       </div>
 
-      {isMenuOpen && (
-        <div className="sm:hidden">
-          {/* biome-ignore lint/a11y/noStaticElementInteractions: Backdrop overlay for mobile menu dismissal */}
-          <div
-            className="fixed inset-0 z-30 bg-black/30"
-            role="presentation"
-            onClick={() => setIsMenuOpen(false)}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") setIsMenuOpen(false);
-            }}
-          />
-          <div className="fixed inset-y-0 left-0 z-40 w-[85%] max-w-xs overflow-y-auto border-r border-border bg-background px-4 py-5 shadow-xl">
-            <div className="flex items-center justify-between pb-4">
-              <span className="text-sm font-semibold uppercase tracking-wide text-muted">
-                Menü
-              </span>
-              <button
-                data-umami-event="header_mobile_menu_close_click"
-                type="button"
-                aria-label="Menüyü kapat"
-                onClick={() => setIsMenuOpen(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-surface-hover"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="space-y-1">
-              {visibleNavItems.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    data-umami-event="header_mobile_nav_jobs_click"
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`block rounded-lg px-4 py-3 text-base font-medium transition-colors ${
-                      isActive
-                        ? "bg-accent-muted text-accent"
-                        : "text-foreground hover:bg-surface-hover"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
+      {typeof document !== "undefined" &&
+        createPortal(
+          <AnimatePresence>
+            {isMenuOpen && (
+              <div className="sm:hidden">
+                <motion.div
+                  className="fixed inset-0 z-90 bg-black/30"
+                  role="presentation"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  onClick={() => setIsMenuOpen(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") setIsMenuOpen(false);
+                  }}
+                />
+                <motion.div
+                  className="fixed inset-y-0 left-0 z-100 w-full max-w-none overflow-hidden border-r border-border bg-background px-4 py-5 shadow-xl"
+                  initial={{ x: "-100%" }}
+                  animate={{ x: 0 }}
+                  exit={{ x: "-100%" }}
+                  transition={{ duration: 0.24, ease: "easeOut" }}
+                >
+                  <div className="flex h-full min-h-0 flex-col">
+                    <div className="flex items-center justify-between pb-4">
+                      <span className="text-sm font-semibold uppercase tracking-wide text-muted">
+                        Menü
+                      </span>
+                      <button
+                        data-umami-event="header_mobile_menu_close_click"
+                        type="button"
+                        aria-label="Menüyü kapat"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-surface-hover"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
 
-              <div className="pt-2">
-                {isAuthenticated ? (
-                  <>
-                    <Link
-                      data-umami-event="header_mobile_profile_click"
-                      href="/profile"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-surface-hover"
-                    >
-                      <User size={18} />
-                      Profilim
-                    </Link>
-                    <Link
-                      data-umami-event="layout_header_go_jobs_new_click_2"
-                      href="/jobs/new"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-surface-hover"
-                    >
-                      <Plus size={18} />
-                      İlan Yayınla
-                    </Link>
-                    <button
-                      data-umami-event="layout_header_logout_click"
-                      type="button"
-                      onClick={() => {
-                        handleLogout();
-                        setIsMenuOpen(false);
-                      }}
-                      className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-base font-medium text-red-500 transition-colors hover:bg-surface-hover"
-                    >
-                      <LogOut size={18} />
-                      Çıkış Yap
-                    </button>
-                  </>
-                ) : (
-                  <Link
-                    data-umami-event="layout_header_go_login_click_3"
-                    href="/login"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block w-full rounded-lg px-4 py-3 text-base font-medium text-accent transition-colors hover:bg-accent-muted"
-                  >
-                    Giriş Yap
-                  </Link>
-                )}
+                    <div className="min-h-0 flex-1 overflow-y-auto">
+                      <div className="space-y-1">
+                        {visibleNavItems.map((item) => {
+                          const isActive = pathname === item.href;
+                          return (
+                            <Link
+                              data-umami-event="header_mobile_nav_jobs_click"
+                              key={item.href}
+                              href={item.href}
+                              onClick={() => setIsMenuOpen(false)}
+                              className={`block rounded-lg px-4 py-3 text-base font-medium transition-colors ${
+                                isActive
+                                  ? "bg-accent-muted text-accent"
+                                  : "text-foreground hover:bg-surface-hover"
+                              }`}
+                            >
+                              {item.label}
+                            </Link>
+                          );
+                        })}
+
+                        <div className="pt-2">
+                          {isAuthenticated ? (
+                            <>
+                              <Link
+                                data-umami-event="header_mobile_profile_click"
+                                href="/profile"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-surface-hover"
+                              >
+                                <User size={18} />
+                                Profilim
+                              </Link>
+                              <Link
+                                data-umami-event="layout_header_go_jobs_new_click_2"
+                                href="/jobs/new"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-surface-hover"
+                              >
+                                <Plus size={18} />
+                                İlan Yayınla
+                              </Link>
+                              <button
+                                data-umami-event="layout_header_logout_click"
+                                type="button"
+                                onClick={() => {
+                                  handleLogout();
+                                  setIsMenuOpen(false);
+                                }}
+                                className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-base font-medium text-red-500 transition-colors hover:bg-surface-hover"
+                              >
+                                <LogOut size={18} />
+                                Çıkış Yap
+                              </button>
+                            </>
+                          ) : (
+                            <Link
+                              data-umami-event="layout_header_go_login_click_3"
+                              href="/login"
+                              onClick={() => setIsMenuOpen(false)}
+                              className="block w-full rounded-lg px-4 py-3 text-base font-medium text-accent transition-colors hover:bg-accent-muted"
+                            >
+                              Giriş Yap
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 border-t border-border pt-6">
+                      <Link
+                        data-umami-event="layout_footer_go_home_click"
+                        href="/"
+                        className="flex items-center gap-2.5"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Image
+                          src="/favicon.ico"
+                          alt="Logo"
+                          width={28}
+                          height={28}
+                          className="rounded-lg shadow-sm"
+                        />
+                        <span className="text-lg font-semibold tracking-tight text-foreground">
+                          maalesef.
+                        </span>
+                      </Link>
+
+                      <p className="mt-4 max-w-xs text-sm leading-6 text-muted">
+                        Samimi kariyer platformu. Hayallerinizdeki ret cevabına
+                        giden en kısa yol.
+                      </p>
+
+                      <div className="mt-4 flex space-x-5">
+                        <Link
+                          data-umami-event="layout_footer_go_x_com_maaleseftr_click"
+                          href="https://x.com/maaleseftr"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-muted transition-colors hover:text-accent"
+                          title="X (Twitter)"
+                        >
+                          <FaXTwitter aria-hidden="true" className="h-5 w-5" />
+                          <span className="sr-only">X (Twitter)</span>
+                        </Link>
+                        <Link
+                          data-umami-event="layout_footer_go_linkedin_company_maaleseftr_click"
+                          href="https://www.linkedin.com/company/maaleseftr"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-muted transition-colors hover:text-accent"
+                          title="LinkedIn"
+                        >
+                          <FaLinkedin aria-hidden="true" className="h-5 w-5" />
+                          <span className="sr-only">LinkedIn</span>
+                        </Link>
+                        <Link
+                          data-umami-event="layout_footer_go_github_maalesef_tr_click"
+                          href="https://sametcc.me/repo/maalesef-tr"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-muted transition-colors hover:text-accent"
+                          title="GitHub"
+                        >
+                          <FaGithub aria-hidden="true" className="h-5 w-5" />
+                          <span className="sr-only">GitHub</span>
+                        </Link>
+                      </div>
+
+                      <div className="mt-6 grid grid-cols-2 gap-4 text-sm">
+                        <Link
+                          data-umami-event="layout_footer_go_about_click"
+                          href="/about"
+                          onClick={() => setIsMenuOpen(false)}
+                          className="text-muted transition-colors hover:text-foreground"
+                        >
+                          Hakkında
+                        </Link>
+                        <Link
+                          data-umami-event="layout_footer_go_mailto_contact_sametcc_me_click"
+                          href="https://sametcc.me"
+                          target="_blank"
+                          className="text-muted transition-colors hover:text-foreground"
+                        >
+                          İletişim
+                        </Link>
+                        <Link
+                          data-umami-event="layout_footer_go_gizlilik_politikasi_click"
+                          href="/gizlilik-politikasi"
+                          onClick={() => setIsMenuOpen(false)}
+                          className="text-muted transition-colors hover:text-foreground"
+                        >
+                          Gizlilik Politikası
+                        </Link>
+                        <Link
+                          data-umami-event="layout_footer_go_kullanim_sartlari_click"
+                          href="/kullanim-sartlari"
+                          onClick={() => setIsMenuOpen(false)}
+                          className="text-muted transition-colors hover:text-foreground"
+                        >
+                          Kullanım Şartları
+                        </Link>
+                      </div>
+
+                      <p className="mt-6 text-xs leading-5 text-muted-light">
+                        &copy; {currentYear} maalesef. Tüm hakları saklıdır.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
     </header>
   );
 }
