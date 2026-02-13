@@ -6,6 +6,7 @@ import {
   HeroSection,
   StatsSection,
   FeaturedJobsSection,
+  PublishJobSection,
   HowItWorksSection,
   TestimonialsSection,
   CTASection,
@@ -24,6 +25,7 @@ export default function Home() {
       <HeroSection />
       <StatsSection stats={stats} loading={statsLoading} />
       <FeaturedJobsSection jobs={jobs} loading={jobsLoading} />
+      <PublishJobSection />
       <HowItWorksSection />
       <TestimonialsSection />
       <CTASection />
