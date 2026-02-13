@@ -53,7 +53,7 @@ export default function ApplyPage({
   }
 
   function isFormValid(): boolean {
-    if (!job || !aiConsent) return false;
+    if (!job || !aiConsent || !cvFile) return false;
     for (const q of job.questions) {
       if (q.required && !answers[q.id]?.trim()) return false;
     }
@@ -62,6 +62,11 @@ export default function ApplyPage({
 
   async function handleSubmit() {
     if (!job || !isFormValid()) return;
+
+    if (!cvFile) {
+      toast.error("Başvuru yapabilmek için CV yüklemeniz gerekiyor.");
+      return;
+    }
 
     const result = await submit(job.id, job.title, answers, cvFile, aiConsent);
     if (result) {
@@ -285,10 +290,12 @@ export default function ApplyPage({
           </Button>
 
           {/* Info */}
-          <div className="rounded-xl border border-border bg-accent-muted/30 p-4">
+          <div className="rounded-xl border border-border bg-accent-muted/30 p-4 mt-4">
             <p className="text-xs leading-relaxed text-muted">
               Sonuçlar profilinize bildirim olarak ve e-posta yoluyla
-              iletilecektir.
+              iletilecektir. Başvuru bilgileriniz geri dönüş sağlanana kadar
+              saklanır ve sonuç bildirildikten sonra sistemden kalıcı olarak
+              silinir.
             </p>
           </div>
         </div>
