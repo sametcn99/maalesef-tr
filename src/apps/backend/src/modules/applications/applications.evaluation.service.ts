@@ -55,7 +55,7 @@ export class ApplicationsEvaluationService implements OnModuleInit {
   async handleDueApplications() {
     const apiKey = this.configService.get<string>('GOOGLE_AI_API_KEY');
     if (!apiKey) {
-      return; // AI değerlendirme devre dışı
+      return; // AI evaluation is disabled
     }
 
     if (!this.genAI) {
@@ -72,7 +72,7 @@ export class ApplicationsEvaluationService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    // Uygulama açılışında gecikmiş değerlendirmeleri hemen çalıştır
+    // Run overdue evaluations immediately on startup
     try {
       await this.handleDueApplications();
     } catch (error) {
@@ -86,7 +86,7 @@ export class ApplicationsEvaluationService implements OnModuleInit {
   private async evaluateApplication(application: Application) {
     const now = new Date();
 
-    // Zaten değerlendirilmiş veya feedback verilmiş başvuruları atla
+    // Skip applications already evaluated or with feedback
     if (
       application.status !== ApplicationStatus.PENDING ||
       application.feedback
@@ -283,11 +283,11 @@ ${cvText}
   private computeRetryTime(now: Date) {
     const isProd = this.configService.get<string>('NODE_ENV') === 'production';
     if (!isProd) {
-      // Dev: 30 saniye sonra tekrar dene
+      // Dev: retry after 5 seconds
       return new Date(now.getTime() + DEV_RETRY_DELAY_MS);
     }
 
-    // Prod: 0-10 saat arası rastgele ertelenir
+    // Prod: randomly delay between 0 and 2 hours
     const delayMs = Math.random() * PROD_RETRY_MAX_DELAY_MS;
     return new Date(now.getTime() + delayMs);
   }

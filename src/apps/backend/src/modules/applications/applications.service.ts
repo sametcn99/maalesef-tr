@@ -58,6 +58,7 @@ export class ApplicationsService {
 
     const now = new Date();
     const isProd = this.configService.get<string>('NODE_ENV') === 'production';
+    // Prod: initial evaluation is between 0-2 hours, Dev: 5 seconds
     const evaluationDelayMs = isProd
       ? Math.floor(Math.random() * PROD_INITIAL_MAX_DELAY_MS)
       : DEV_INITIAL_DELAY_MS;
