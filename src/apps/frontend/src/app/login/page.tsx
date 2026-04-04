@@ -127,7 +127,7 @@ function LoginForm() {
             </div>
 
             {error && (
-              <div className="mt-4 rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-600 dark:border-red-900/20 dark:bg-red-900/10 dark:text-red-400">
+              <div className="mt-4 mb-4 rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-600 dark:border-red-900/20 dark:bg-red-900/10 dark:text-red-400">
                 <div className="flex gap-3">
                   <div className="shrink-0">•</div>
                   <div>{error}</div>
