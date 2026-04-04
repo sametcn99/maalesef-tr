@@ -2,7 +2,8 @@
 
 import { trackShare } from "@/lib/api";
 import { REJECTION_SHARE_MESSAGES } from "@/lib/rejection-share-messages";
-import { Linkedin, Share2 } from "lucide-react";
+import { Share2 } from "lucide-react";
+import { FaLinkedin } from "react-icons/fa6";
 import { useState } from "react";
 
 interface RejectionShareProps {
@@ -105,7 +106,7 @@ export function RejectionShare({ message: propMessage }: RejectionShareProps) {
           onClick={handleShareLinkedin}
           className="inline-flex h-8 items-center gap-2 rounded-lg bg-[#0077b5] text-[12px] font-medium text-white px-3 transition hover:bg-[#0077b5]/80"
         >
-          <Linkedin size={14} />
+          <FaLinkedin className="h-3.5 w-3.5" />
           Linkedin'de Paylaş
         </button>
       </div>

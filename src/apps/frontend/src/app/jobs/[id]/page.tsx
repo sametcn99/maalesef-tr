@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useMemo, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Badge, Separator } from "@radix-ui/themes";
 import {
@@ -13,14 +13,17 @@ import {
   Send,
   User,
   AlertTriangle,
-  Linkedin,
   Share2,
+  Sparkles,
 } from "lucide-react";
+import { FaLinkedin } from "react-icons/fa6";
 
-import { useJob } from "@/hooks";
+import { useJob, useJobs } from "@/hooks";
 import { useAuth } from "@/context/auth-context";
 import { ErrorCard, DetailSkeleton } from "@/components/ui";
+import { JobCard, JobCardSkeleton } from "@/components/job";
 import { getRandomJobShareMessage } from "@/lib/job-share-messages";
+import type { Job } from "@/types";
 
 export default function JobDetailPage({
   params,
@@ -30,9 +33,31 @@ export default function JobDetailPage({
   const { id } = use(params);
   const router = useRouter();
   const { job, loading, error } = useJob(id);
+  const { jobs, loading: jobsLoading } = useJobs();
   const { isAuthenticated } = useAuth();
 
   const [shareMessage, setShareMessage] = useState("");
+
+  const similarJobs = useMemo(() => {
+    if (!job) return [];
+
+    const candidates = jobs.filter(
+      (candidate: Job) =>
+        candidate.id !== job.id && (!job.slug || candidate.slug !== job.slug),
+    );
+
+    const shuffled = [...candidates];
+
+    for (let index = shuffled.length - 1; index > 0; index -= 1) {
+      const randomIndex = Math.floor(Math.random() * (index + 1));
+      [shuffled[index], shuffled[randomIndex]] = [
+        shuffled[randomIndex],
+        shuffled[index],
+      ];
+    }
+
+    return shuffled.slice(0, 4);
+  }, [jobs, job]);
 
   useEffect(() => {
     if (job) {
@@ -68,7 +93,7 @@ export default function JobDetailPage({
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
       {/* Back button */}
       <button
         data-umami-event="jobs_job_back_click"
@@ -141,7 +166,7 @@ export default function JobDetailPage({
                           tabIndex: 0,
                           onClick: () =>
                             router.push(`/p/${job.createdBy?.slug}`),
-                          onKeyDown: (e: React.KeyboardEvent) => {
+                          onKeyDown: (e: KeyboardEvent<HTMLButtonElement>) => {
                             if (e.key === "Enter" || e.key === " ") {
                               e.preventDefault();
                               router.push(`/p/${job.createdBy?.slug}`);
@@ -185,7 +210,7 @@ export default function JobDetailPage({
               </div>
               <div className="rounded-xl border border-border bg-surface p-6">
                 <ul className="stagger-children space-y-3">
-                  {job.requirements.map((req) => (
+                  {job.requirements.map((req: string) => (
                     <li
                       key={req}
                       className="flex items-start gap-3 text-sm leading-relaxed text-foreground/80"
@@ -279,7 +304,7 @@ export default function JobDetailPage({
                     );
                   }}
                 >
-                  <Linkedin size={16} />
+                  <FaLinkedin className="h-4 w-4" />
                   LinkedIn
                 </Button>
                 <Button
@@ -311,6 +336,42 @@ export default function JobDetailPage({
           </div>
         </div>
       </div>
+
+      <section className="mt-16 border-t border-border/80 pt-10">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-accent/15 bg-accent/6 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-accent">
+              <Sparkles size={14} /> Benzer ilanlar
+            </div>
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">
+              Göz atabileceğin diğer pozisyonlar
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+              Aynı dozda umutsuzluk vaat eden birkaç ilan daha seçtik.
+            </p>
+          </div>
+        </div>
+
+        {jobsLoading && similarJobs.length === 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, index) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: Skeleton cards are static placeholders.
+              <JobCardSkeleton key={`similar-job-skeleton-${index}`} />
+            ))}
+          </div>
+        ) : similarJobs.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {similarJobs.map((similarJob) => (
+              <JobCard key={similarJob.id} job={similarJob} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-border bg-surface/70 p-6 text-sm leading-6 text-muted">
+            Şimdilik önerebileceğimiz başka ilan yok. Yeni kurgusal pozisyonlar
+            geldikçe bu alan dolacak.
+          </div>
+        )}
+      </section>
     </div>
   );
 }
