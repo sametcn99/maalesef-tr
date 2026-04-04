@@ -46,6 +46,12 @@ export class UsersRepository {
     });
   }
 
+  async findByPasswordResetToken(token: string): Promise<User | null> {
+    return this.repository.findOne({
+      where: { passwordResetToken: token },
+    });
+  }
+
   async markEmailVerified(userId: string): Promise<User | null> {
     await this.repository.update(userId, {
       emailVerified: true,
@@ -73,8 +79,40 @@ export class UsersRepository {
     return this.findById(userId);
   }
 
-  async updatePassword(userId: string, hashedPassword: string): Promise<void> {
-    await this.repository.update(userId, { password: hashedPassword });
+  async updatePasswordResetToken(
+    userId: string,
+    token: string,
+    expiresAt: Date,
+    sentAt: Date,
+  ): Promise<User | null> {
+    await this.repository.update(userId, {
+      passwordResetToken: token,
+      passwordResetTokenExpiresAt: expiresAt,
+      passwordResetLastSentAt: sentAt,
+    });
+
+    return this.findById(userId);
+  }
+
+  async updatePassword(
+    userId: string,
+    hashedPassword: string,
+    options?: { clearResetToken?: boolean },
+  ): Promise<void> {
+    const changedAt = new Date();
+
+    await this.repository.update(userId, {
+      password: hashedPassword,
+      lastPasswordChangedAt: changedAt,
+      refreshToken: null,
+      ...(options?.clearResetToken
+        ? {
+            passwordResetToken: null,
+            passwordResetTokenExpiresAt: null,
+            passwordResetLastSentAt: null,
+          }
+        : {}),
+    });
   }
 
   async deleteUnverifiedOlderThan(days: number): Promise<number> {

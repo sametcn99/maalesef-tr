@@ -3,6 +3,7 @@ import {
   ConflictException,
   UnauthorizedException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -14,6 +15,8 @@ import {
   LoginDto,
   VerifyEmailDto,
   ChangePasswordDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
   DeleteAccountDto,
 } from './dto/index.js';
 import { MailService } from '../mail/mail.service.js';
@@ -21,9 +24,15 @@ import { MailService } from '../mail/mail.service.js';
 const SALT_ROUNDS = 12;
 const EMAIL_VERIFICATION_TTL_MS = 2 * 24 * 60 * 60 * 1000;
 const EMAIL_VERIFICATION_RESEND_COOLDOWN_MS = 5 * 60 * 1000;
+const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
+const PASSWORD_RESET_RESEND_COOLDOWN_MS = 5 * 60 * 1000;
+const PASSWORD_RESET_REQUEST_MESSAGE =
+  'Eğer bu e-posta ile kayıtlı bir hesap varsa, şifre sıfırlama bağlantısı gönderildi.';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
@@ -245,6 +254,77 @@ export class AuthService {
 
     return {
       message: 'Doğrulama e-postası tekrar gönderildi.',
+    };
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto) {
+    const user = await this.usersService.findByEmail(dto.email);
+
+    if (!user) {
+      return { message: PASSWORD_RESET_REQUEST_MESSAGE };
+    }
+
+    const lastSent = user.passwordResetLastSentAt?.getTime();
+    if (lastSent && Date.now() - lastSent < PASSWORD_RESET_RESEND_COOLDOWN_MS) {
+      return { message: PASSWORD_RESET_REQUEST_MESSAGE };
+    }
+
+    const resetToken = randomUUID();
+    const resetExpiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MS);
+    const sentAt = new Date();
+
+    await this.usersService.updatePasswordResetToken(
+      user.id,
+      resetToken,
+      resetExpiresAt,
+      sentAt,
+    );
+
+    void this.mailService
+      .sendPasswordReset(user.email, resetToken)
+      .catch((error: unknown) => {
+        const err = error as Error;
+        this.logger.error(
+          `Password reset email could not be sent to ${user.email}`,
+          err?.stack,
+        );
+      });
+
+    return { message: PASSWORD_RESET_REQUEST_MESSAGE };
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    const user = await this.usersService
+      .findByPasswordResetToken(dto.token)
+      .catch(() => null);
+
+    if (!user) {
+      throw new BadRequestException(
+        'Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş.',
+      );
+    }
+
+    if (
+      !user.passwordResetTokenExpiresAt ||
+      user.passwordResetTokenExpiresAt.getTime() < Date.now()
+    ) {
+      throw new BadRequestException(
+        'Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş.',
+      );
+    }
+
+    const isSamePassword = await bcrypt.compare(dto.newPassword, user.password);
+    if (isSamePassword) {
+      throw new BadRequestException('Yeni şifre mevcut şifre ile aynı olamaz.');
+    }
+
+    const hashed = await bcrypt.hash(dto.newPassword, SALT_ROUNDS);
+    await this.usersService.updatePassword(user.id, hashed, {
+      clearResetToken: true,
+    });
+
+    return {
+      message: 'Şifren başarıyla sıfırlandı. Giriş yapabilirsin.',
     };
   }
 

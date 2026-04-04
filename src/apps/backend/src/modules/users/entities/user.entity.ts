@@ -31,6 +31,18 @@ export class User extends AppBaseEntity {
   @Column({ type: 'timestamptz', nullable: true })
   emailVerificationLastSentAt!: Date | null;
 
+  @Column({ type: 'uuid', unique: true, nullable: true })
+  passwordResetToken!: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  passwordResetTokenExpiresAt!: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  passwordResetLastSentAt!: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  lastPasswordChangedAt!: Date | null;
+
   @OneToMany(() => Application, (application) => application.user)
   applications!: Relation<Application>[];
 

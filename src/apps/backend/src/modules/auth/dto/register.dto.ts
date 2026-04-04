@@ -5,6 +5,11 @@ import {
   MinLength,
   Matches,
 } from 'class-validator';
+import {
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_REGEX,
+  PASSWORD_VALIDATION_MESSAGE,
+} from './password-policy.js';
 
 export class RegisterDto {
   @IsString()
@@ -16,10 +21,11 @@ export class RegisterDto {
   email!: string;
 
   @IsString()
-  @MinLength(8, { message: 'Şifre en az 8 karakter olmalıdır.' })
-  @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
-    message:
-      'Şifre en az bir büyük harf, bir küçük harf ve bir rakam içermelidir.',
+  @MinLength(PASSWORD_MIN_LENGTH, {
+    message: 'Şifre en az 8 karakter olmalıdır.',
+  })
+  @Matches(PASSWORD_REGEX, {
+    message: PASSWORD_VALIDATION_MESSAGE,
   })
   @IsNotEmpty({ message: 'Şifre alanı zorunludur.' })
   password!: string;

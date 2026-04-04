@@ -1,14 +1,19 @@
-import { IsNotEmpty, IsString, MinLength, Matches } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsUUID,
+  MinLength,
+  Matches,
+} from 'class-validator';
 import {
   PASSWORD_MIN_LENGTH,
   PASSWORD_REGEX,
   PASSWORD_VALIDATION_MESSAGE,
 } from './password-policy.js';
 
-export class ChangePasswordDto {
-  @IsString()
-  @IsNotEmpty({ message: 'Mevcut şifre gereklidir.' })
-  currentPassword!: string;
+export class ResetPasswordDto {
+  @IsUUID('4', { message: 'Geçerli bir sıfırlama bağlantısı gereklidir.' })
+  token!: string;
 
   @IsString()
   @MinLength(PASSWORD_MIN_LENGTH, {

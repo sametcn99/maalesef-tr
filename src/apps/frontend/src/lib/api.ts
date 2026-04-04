@@ -222,6 +222,25 @@ export async function resendVerificationEmail(): Promise<{ message: string }> {
   return request("/auth/resend-verification", { method: "POST" });
 }
 
+export async function forgotPassword(
+  email: string,
+): Promise<{ message: string }> {
+  return request("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPassword(payload: {
+  token: string;
+  newPassword: string;
+}): Promise<{ message: string }> {
+  return request("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function deleteAccount(
   password: string,
 ): Promise<{ message: string }> {

@@ -66,9 +66,42 @@ export class UsersService {
     return user;
   }
 
-  async updatePassword(userId: string, hashedPassword: string): Promise<void> {
+  async findByPasswordResetToken(token: string): Promise<User> {
+    const user = await this.usersRepository.findByPasswordResetToken(token);
+    if (!user) {
+      throw new NotFoundException('Şifre sıfırlama bağlantısı geçersiz.');
+    }
+
+    return user;
+  }
+
+  async updatePasswordResetToken(
+    userId: string,
+    token: string,
+    expiresAt: Date,
+    sentAt: Date,
+  ): Promise<User> {
+    const user = await this.usersRepository.updatePasswordResetToken(
+      userId,
+      token,
+      expiresAt,
+      sentAt,
+    );
+
+    if (!user) {
+      throw new NotFoundException('Kullanıcı bulunamadı.');
+    }
+
+    return user;
+  }
+
+  async updatePassword(
+    userId: string,
+    hashedPassword: string,
+    options?: { clearResetToken?: boolean },
+  ): Promise<void> {
     await this.findById(userId);
-    await this.usersRepository.updatePassword(userId, hashedPassword);
+    await this.usersRepository.updatePassword(userId, hashedPassword, options);
   }
 
   async deleteAccount(userId: string): Promise<void> {
