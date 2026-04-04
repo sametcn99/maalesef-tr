@@ -57,7 +57,7 @@ function LoginForm() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="overflow-hidden rounded-3xl border border-white/20 bg-surface/50 p-8 shadow-xl backdrop-blur-xl transition-all duration-300 hover:shadow-2xl hover:shadow-accent/5 dark:bg-surface/30">
+          <div className="overflow-hidden rounded-3xl border border-white/20 bg-surface/50 p-8 shadow-xl backdrop-blur-xl transition-all duration-300 hover:shadow-2xl hover:shadow-accent/5">
             <div className="space-y-6">
               <div className="space-y-2">
                 <label
@@ -127,7 +127,7 @@ function LoginForm() {
             </div>
 
             {error && (
-              <div className="mt-4 mb-4 rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-600 dark:border-red-900/20 dark:bg-red-900/10 dark:text-red-400">
+              <div className="mt-4 mb-4 rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-600">
                 <div className="flex gap-3">
                   <div className="shrink-0">•</div>
                   <div>{error}</div>

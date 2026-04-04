@@ -294,7 +294,7 @@ export default function JobDetailPage({
                   data-umami-event="jobs_job_share_linkedin_click"
                   variant="surface"
                   color="blue"
-                  className="w-full cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30"
+                  className="w-full cursor-pointer hover:bg-blue-100"
                   onClick={() => {
                     window.open(
                       `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(
@@ -310,7 +310,7 @@ export default function JobDetailPage({
                 <Button
                   data-umami-event="jobs_job_share_x_click"
                   variant="surface"
-                  className="w-full cursor-pointer bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+                  className="w-full cursor-pointer bg-black text-white hover:bg-gray-800"
                   onClick={() => {
                     window.open(
                       `https://twitter.com/intent/tweet?text=${encodeURIComponent(

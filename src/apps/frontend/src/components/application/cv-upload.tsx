@@ -80,7 +80,7 @@ export function CvUpload({ onFileSelect, disabled }: CvUploadProps) {
         onDragLeave={() => setIsDragging(false)}
         className={`relative flex w-full min-h-[140px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent ${
           error
-            ? "border-red-300 bg-red-50/50 dark:border-red-800 dark:bg-red-950/10"
+            ? "border-red-300 bg-red-50/50"
             : isDragging
               ? "border-accent bg-accent-muted scale-[1.01]"
               : file
@@ -161,9 +161,9 @@ export function CvUpload({ onFileSelect, disabled }: CvUploadProps) {
       </label>
 
       {error && (
-        <div className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 dark:bg-red-950/20">
+        <div className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2">
           <X size={14} className="shrink-0 text-red-500" />
-          <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
+          <p className="text-xs text-red-600">{error}</p>
         </div>
       )}
     </div>
