@@ -21,6 +21,7 @@ import { SeedService } from '../database/seed.service.js';
 // Entities
 import { User } from '../modules/users/entities/user.entity.js';
 import { Job } from '../modules/jobs/entities/job.entity.js';
+import { JobView } from '../modules/jobs/entities/job-view.entity.js';
 import { Application } from '../modules/applications/entities/application.entity.js';
 import { NotificationEntity } from '../modules/notifications/entities/notification.entity.js';
 import { UserBadge } from '../modules/badges/entities/user-badge.entity.js';
@@ -48,7 +49,14 @@ import { envValidationSchema } from '../common/config/env.validation.js';
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
-        entities: [User, Job, Application, NotificationEntity, UserBadge],
+        entities: [
+          User,
+          Job,
+          JobView,
+          Application,
+          NotificationEntity,
+          UserBadge,
+        ],
         synchronize: configService.get<boolean>('DB_SYNCHRONIZE'),
         migrations: [join(import.meta.dirname, '../database/migrations/*.js')],
         migrationsRun: true,
@@ -59,6 +67,7 @@ import { envValidationSchema } from '../common/config/env.validation.js';
     TypeOrmModule.forFeature([
       User,
       Job,
+      JobView,
       Application,
       NotificationEntity,
       UserBadge,
