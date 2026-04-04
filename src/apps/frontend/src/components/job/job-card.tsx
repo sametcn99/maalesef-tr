@@ -1,6 +1,15 @@
 "use client";
 
-import { MapPin, Building2, ArrowUpRight, Clock, User } from "lucide-react";
+import {
+  MapPin,
+  Building2,
+  ArrowUpRight,
+  Clock,
+  User,
+  Eye,
+  CheckCircle2,
+} from "lucide-react";
+import { Badge } from "@radix-ui/themes";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Job } from "@/types";
@@ -8,6 +17,8 @@ import { useAuth } from "@/context/auth-context";
 
 interface JobCardProps {
   job: Job;
+  isApplied?: boolean;
+  isViewed?: boolean;
 }
 
 function formatRelative(dateStr: string) {
@@ -20,7 +31,11 @@ function formatRelative(dateStr: string) {
   return `${Math.floor(days / 30)} ay önce`;
 }
 
-export function JobCard({ job }: JobCardProps) {
+export function JobCard({
+  job,
+  isApplied = false,
+  isViewed = false,
+}: JobCardProps) {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
 
@@ -41,7 +56,7 @@ export function JobCard({ job }: JobCardProps) {
       className="group relative block overflow-hidden rounded-xl border border-border bg-surface transition-all duration-300 hover:border-accent/30 hover:shadow-xl hover:shadow-accent/5 hover:-translate-y-0.5 cursor-pointer"
     >
       {/* Accent top line */}
-      <div className="absolute inset-x-0 top-0 h-[2px] bg-linear-to-r from-transparent via-accent/0 to-transparent transition-all duration-300 group-hover:via-accent" />
+      <div className="absolute inset-x-0 top-0 h-0.5 bg-linear-to-r from-transparent via-accent/0 to-transparent transition-all duration-300 group-hover:via-accent" />
 
       <div className="gap-4 p-6">
         <div className="flex items-start justify-between">
@@ -100,6 +115,21 @@ export function JobCard({ job }: JobCardProps) {
         <p className="text-sm leading-relaxed text-muted line-clamp-2 mt-4">
           {job.shortDescription}
         </p>
+
+        {(isApplied || isViewed) && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {isApplied && (
+              <Badge size="1" variant="soft" color="green" className="gap-1">
+                <CheckCircle2 size={12} /> Başvuruldu
+              </Badge>
+            )}
+            {isViewed && (
+              <Badge size="1" variant="soft" color="blue" className="gap-1">
+                <Eye size={12} /> İncelendi
+              </Badge>
+            )}
+          </div>
+        )}
 
         <div className="flex items-center justify-between pt-3">
           <span className="inline-flex items-center gap-1 rounded-full bg-surface-hover px-2.5 py-1 text-xs text-muted">

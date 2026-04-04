@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { JobsRepository } from './jobs.repository.js';
+import { JobsRepository, type ViewedJobRecord } from './jobs.repository.js';
 import { CreateJobDto } from './dto/index.js';
 import { Job } from './entities/job.entity.js';
 import type { User } from '../users/entities/user.entity.js';
@@ -103,6 +103,15 @@ export class JobsService {
 
   async count(): Promise<number> {
     return this.jobsRepository.count();
+  }
+
+  async trackView(jobId: string, userId: string): Promise<void> {
+    await this.findById(jobId);
+    await this.jobsRepository.trackView(userId, jobId);
+  }
+
+  async findViewedByUser(userId: string): Promise<ViewedJobRecord[]> {
+    return this.jobsRepository.findViewedByUser(userId);
   }
 
   async delete(jobId: string, userId: string): Promise<void> {

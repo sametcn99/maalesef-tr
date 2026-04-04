@@ -87,7 +87,7 @@ function ProfileContent() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 min-h-screen">
       {/* Profile header */}
       <div className="animate-fade-in mb-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

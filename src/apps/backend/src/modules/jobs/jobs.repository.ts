@@ -2,16 +2,24 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Job } from './entities/job.entity.js';
+import { JobView } from './entities/job-view.entity.js';
 import {
   Application,
   ApplicationStatus,
 } from '../applications/entities/application.entity.js';
+
+export interface ViewedJobRecord {
+  jobId: string;
+  lastViewedAt: Date;
+}
 
 @Injectable()
 export class JobsRepository {
   constructor(
     @InjectRepository(Job)
     private readonly repository: Repository<Job>,
+    @InjectRepository(JobView)
+    private readonly jobViewRepository: Repository<JobView>,
   ) {}
 
   async create(data: Partial<Job>): Promise<Job> {
@@ -103,5 +111,26 @@ export class JobsRepository {
 
   async countByUserId(userId: string): Promise<number> {
     return this.repository.count({ where: { createdById: userId } });
+  }
+
+  async trackView(userId: string, jobId: string): Promise<void> {
+    await this.jobViewRepository.upsert(
+      {
+        userId,
+        jobId,
+        lastViewedAt: new Date(),
+      },
+      ['userId', 'jobId'],
+    );
+  }
+
+  async findViewedByUser(userId: string): Promise<ViewedJobRecord[]> {
+    return this.jobViewRepository
+      .createQueryBuilder('jobView')
+      .select('jobView.jobId', 'jobId')
+      .addSelect('jobView.lastViewedAt', 'lastViewedAt')
+      .where('jobView.userId = :userId', { userId })
+      .orderBy('jobView.lastViewedAt', 'DESC')
+      .getRawMany<ViewedJobRecord>();
   }
 }

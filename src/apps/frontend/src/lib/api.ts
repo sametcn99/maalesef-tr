@@ -1,5 +1,11 @@
 import { env } from "@/lib/env";
-import type { Application, CreateJobPayload, Job, Notification } from "@/types";
+import type {
+  Application,
+  CreateJobPayload,
+  Job,
+  Notification,
+  ViewedJob,
+} from "@/types";
 
 const BASE_URL = env.NEXT_PUBLIC_API_URL;
 
@@ -95,6 +101,14 @@ export async function logout(): Promise<void> {
 
 export async function getJobs(): Promise<Job[]> {
   return request<Job[]>("/jobs");
+}
+
+export async function getViewedJobs(): Promise<ViewedJob[]> {
+  return request<ViewedJob[]>("/jobs/viewed");
+}
+
+export async function trackJobView(jobId: string): Promise<void> {
+  await request<void>(`/jobs/${jobId}/view`, { method: "POST" });
 }
 
 export async function getJob(id: string): Promise<Job> {

@@ -7,6 +7,7 @@ import { ApplicationsRepository } from './applications.repository.js';
 import { JobsModule } from '../jobs/jobs.module.js';
 import { NotificationsModule } from '../notifications/notifications.module.js';
 import { ApplicationsEvaluationService } from './applications.evaluation.service.js';
+import { TemplateModule } from '../../common/templates/template.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { MailModule } from '../mail/mail.module.js';
 import { BadgesModule } from '../badges/badges.module.js';
@@ -17,6 +18,7 @@ import { BadgesModule } from '../badges/badges.module.js';
     JobsModule,
     UsersModule,
     MailModule,
+    TemplateModule,
     BadgesModule,
     forwardRef(() => NotificationsModule),
   ],

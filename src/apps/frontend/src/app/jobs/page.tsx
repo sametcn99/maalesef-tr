@@ -1,32 +1,90 @@
 "use client";
 
-import { useJobs } from "@/hooks";
+import { useJobInteractions, useJobs } from "@/hooks";
 import { JobCard } from "@/components/job";
 import { JobCardSkeleton } from "@/components/job";
 import { ErrorCard, EmptyState } from "@/components/ui";
-import { Briefcase, Search, PlusCircle, AlertTriangle } from "lucide-react";
-import { TextField, Button } from "@radix-ui/themes";
+import {
+  Briefcase,
+  Search,
+  PlusCircle,
+  AlertTriangle,
+  Filter,
+} from "lucide-react";
+import { TextField, Button, Select } from "@radix-ui/themes";
 import { useState, useMemo } from "react";
 import { useAuth } from "@/context/auth-context";
 import Link from "next/link";
 
+type InteractionFilter = "all" | "only" | "hide";
+
 export default function JobsPage() {
   const { jobs, loading, error } = useJobs();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const {
+    isApplied,
+    isViewed,
+    loading: interactionsLoading,
+  } = useJobInteractions();
   const [search, setSearch] = useState("");
+  const [appliedFilter, setAppliedFilter] = useState<InteractionFilter>("all");
+  const [viewedFilter, setViewedFilter] = useState<InteractionFilter>("all");
   const isInitialLoading = loading && jobs.length === 0;
   const canPublishJob = !authLoading && isAuthenticated;
+  const canUseInteractionFilters = !authLoading && isAuthenticated;
+  const hasInteractionFilters =
+    appliedFilter !== "all" || viewedFilter !== "all";
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return jobs;
     const q = search.toLowerCase();
-    return jobs.filter(
-      (j) =>
-        j.title.toLowerCase().includes(q) ||
-        j.company.toLowerCase().includes(q) ||
-        j.location.toLowerCase().includes(q),
-    );
-  }, [jobs, search]);
+    return jobs.filter((job) => {
+      const matchesSearch =
+        !search.trim() ||
+        job.title.toLowerCase().includes(q) ||
+        job.company.toLowerCase().includes(q) ||
+        job.location.toLowerCase().includes(q);
+
+      if (!matchesSearch) {
+        return false;
+      }
+
+      if (!canUseInteractionFilters || interactionsLoading) {
+        return true;
+      }
+
+      const applied = isApplied(job.id);
+      const viewed = isViewed(job.id);
+
+      if (appliedFilter === "only" && !applied) {
+        return false;
+      }
+
+      if (appliedFilter === "hide" && applied) {
+        return false;
+      }
+
+      if (viewedFilter === "only" && !viewed) {
+        return false;
+      }
+
+      if (viewedFilter === "hide" && viewed) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [
+    jobs,
+    search,
+    canUseInteractionFilters,
+    interactionsLoading,
+    isApplied,
+    isViewed,
+    appliedFilter,
+    viewedFilter,
+  ]);
+
+  const emptyStateHasFilters = Boolean(search.trim()) || hasInteractionFilters;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
@@ -93,11 +151,72 @@ export default function JobsPage() {
         </div>
 
         {!isInitialLoading && jobs.length > 0 && (
-          <div className="mt-4 flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-muted px-3 py-1 text-xs font-medium text-accent">
-              <Briefcase size={12} />
-              {filtered.length} açık pozisyon
-            </span>
+          <div className="mt-4 flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-muted px-3 py-1 text-xs font-medium text-accent">
+                <Briefcase size={12} />
+                {filtered.length} açık pozisyon
+              </span>
+            </div>
+
+            {canUseInteractionFilters && (
+              <div className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                  <div>
+                    <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-muted">
+                      <Filter size={14} className="text-accent" />
+                      Kişisel filtreler
+                    </div>
+                    <p className="mt-1 text-xs text-muted">
+                      Başvurduğunuz veya incelediğiniz ilanları ayrı ayrı
+                      gösterin ya da gizleyin.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2 lg:min-w-104">
+                    <div className="flex flex-col gap-1 text-sm text-foreground">
+                      <span className="text-xs font-medium text-muted">
+                        Başvurduklarım
+                      </span>
+                      <Select.Root
+                        value={appliedFilter}
+                        onValueChange={(value) =>
+                          setAppliedFilter(value as InteractionFilter)
+                        }
+                        disabled={interactionsLoading}
+                      >
+                        <Select.Trigger />
+                        <Select.Content>
+                          <Select.Item value="all">Tümü</Select.Item>
+                          <Select.Item value="only">Sadece göster</Select.Item>
+                          <Select.Item value="hide">Listeden gizle</Select.Item>
+                        </Select.Content>
+                      </Select.Root>
+                    </div>
+
+                    <div className="flex flex-col gap-1 text-sm text-foreground">
+                      <span className="text-xs font-medium text-muted">
+                        İncelediklerim
+                      </span>
+                      <Select.Root
+                        value={viewedFilter}
+                        onValueChange={(value) =>
+                          setViewedFilter(value as InteractionFilter)
+                        }
+                        disabled={interactionsLoading}
+                      >
+                        <Select.Trigger />
+                        <Select.Content>
+                          <Select.Item value="all">Tümü</Select.Item>
+                          <Select.Item value="only">Sadece göster</Select.Item>
+                          <Select.Item value="hide">Listeden gizle</Select.Item>
+                        </Select.Content>
+                      </Select.Root>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -126,20 +245,25 @@ export default function JobsPage() {
         <EmptyState
           icon={<Briefcase size={48} strokeWidth={1} />}
           title={
-            search
-              ? "Aradığınız kriterlere uygun ilan bulunamadı."
+            emptyStateHasFilters
+              ? "Seçtiğiniz filtrelere uygun ilan bulunamadı."
               : "Şu anda açık pozisyon bulunmuyor."
           }
           description={
-            search
-              ? "Farklı anahtar kelimelerle tekrar deneyin."
+            emptyStateHasFilters
+              ? "Aramayı genişletin veya kişisel filtreleri değiştirin."
               : "Daha sonra tekrar kontrol edin."
           }
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {filtered.map((job) => (
-            <JobCard key={job.id} job={job} />
+            <JobCard
+              key={job.id}
+              job={job}
+              isApplied={canUseInteractionFilters && isApplied(job.id)}
+              isViewed={canUseInteractionFilters && isViewed(job.id)}
+            />
           ))}
         </div>
       )}

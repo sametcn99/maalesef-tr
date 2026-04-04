@@ -41,6 +41,10 @@ lerna-debug.log*
 .env.test.local
 .env.production.local
 .env.local
+.env.job-seeder.local
+
+# local-only utility scripts
+src/scripts/post-production-jobs.local.ts
 
 # uploads
 /uploads

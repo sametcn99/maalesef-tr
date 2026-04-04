@@ -2,6 +2,7 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
@@ -46,6 +47,15 @@ export class JobsController {
     return this.jobsService.findMine(userId);
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List viewed job postings of authenticated user' })
+  @ApiOkResponse({ description: 'Returns viewed jobs of authenticated user.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
+  @Get('viewed')
+  async findViewed(@CurrentUser('id') userId: string) {
+    return this.jobsService.findViewedByUser(userId);
+  }
+
   @Public()
   @ApiOperation({ summary: 'Get a job by id or slug' })
   @ApiParam({
@@ -62,6 +72,18 @@ export class JobsController {
       return this.jobsService.findById(idOrSlug);
     }
     return this.jobsService.findBySlug(idOrSlug);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Mark a job posting as viewed' })
+  @ApiParam({ name: 'id', description: 'Job id', type: String })
+  @ApiNoContentResponse({ description: 'Job view recorded successfully.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
+  @ApiForbiddenResponse({ description: 'Forbidden.' })
+  @Post(':id/view')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async trackView(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    await this.jobsService.trackView(id, userId);
   }
 
   @ApiBearerAuth()

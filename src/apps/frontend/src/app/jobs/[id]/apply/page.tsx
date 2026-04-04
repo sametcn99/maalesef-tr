@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-import { useJob, useSubmitApplication } from "@/hooks";
+import { useJob, useSubmitApplication, useViewedJobs } from "@/hooks";
 import { useAuth } from "@/context/auth-context";
 import { CvUpload } from "@/components/application";
 import { ErrorCard, DetailSkeleton } from "@/components/ui";
@@ -35,6 +35,7 @@ export default function ApplyPage({
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { job, loading, error } = useJob(id);
   const { submit, submitting } = useSubmitApplication();
+  const { markViewed } = useViewedJobs();
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [cvFile, setCvFile] = useState<File | null>(null);
@@ -47,6 +48,14 @@ export default function ApplyPage({
       router.replace(`/login?redirect=/jobs/${id}/apply`);
     }
   }, [isAuthenticated, authLoading, router, id]);
+
+  useEffect(() => {
+    if (!job || !isAuthenticated) {
+      return;
+    }
+
+    void markViewed(job.id);
+  }, [job, isAuthenticated, markViewed]);
 
   function updateAnswer(questionId: string, value: string) {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));

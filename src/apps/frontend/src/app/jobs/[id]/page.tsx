@@ -15,10 +15,11 @@ import {
   AlertTriangle,
   Share2,
   Sparkles,
+  Eye,
 } from "lucide-react";
 import { FaLinkedin } from "react-icons/fa6";
 
-import { useJob, useJobs } from "@/hooks";
+import { useJob, useJobInteractions, useJobs } from "@/hooks";
 import { useAuth } from "@/context/auth-context";
 import { ErrorCard, DetailSkeleton } from "@/components/ui";
 import { JobCard, JobCardSkeleton } from "@/components/job";
@@ -35,8 +36,12 @@ export default function JobDetailPage({
   const { job, loading, error } = useJob(id);
   const { jobs, loading: jobsLoading } = useJobs();
   const { isAuthenticated } = useAuth();
+  const { isApplied, isViewed, markViewed } = useJobInteractions();
 
   const [shareMessage, setShareMessage] = useState("");
+
+  const applied = job ? isApplied(job.id) : false;
+  const viewed = job ? isViewed(job.id) : false;
 
   const similarJobs = useMemo(() => {
     if (!job) return [];
@@ -64,6 +69,14 @@ export default function JobDetailPage({
       setShareMessage(getRandomJobShareMessage(job.title));
     }
   }, [job]);
+
+  useEffect(() => {
+    if (!job || !isAuthenticated) {
+      return;
+    }
+
+    void markViewed(job.id);
+  }, [job, isAuthenticated, markViewed]);
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
 
@@ -177,6 +190,26 @@ export default function JobDetailPage({
                   >
                     <User size={12} /> {job.createdBy?.name ?? "İlan sahibi"}
                   </Badge>
+                  {applied && (
+                    <Badge
+                      size="2"
+                      variant="soft"
+                      color="green"
+                      className="gap-1"
+                    >
+                      <CheckCircle2 size={12} /> Başvuruldu
+                    </Badge>
+                  )}
+                  {viewed && (
+                    <Badge
+                      size="2"
+                      variant="soft"
+                      color="blue"
+                      className="gap-1"
+                    >
+                      <Eye size={12} /> İncelendi
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>

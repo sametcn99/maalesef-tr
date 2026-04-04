@@ -48,6 +48,11 @@ export interface Application {
   feedback?: string;
 }
 
+export interface ViewedJob {
+  jobId: string;
+  lastViewedAt: string;
+}
+
 export interface Notification {
   id: string;
   title: string;

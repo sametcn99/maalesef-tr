@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Job } from './entities/job.entity.js';
+import { JobView } from './entities/job-view.entity.js';
 import { JobsController } from './jobs.controller.js';
 import { JobsService } from './jobs.service.js';
 import { JobsRepository } from './jobs.repository.js';
@@ -10,7 +11,7 @@ import { BadgesModule } from '../badges/badges.module.js';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Job]),
+    TypeOrmModule.forFeature([Job, JobView]),
     UsersModule,
     NotificationsModule,
     BadgesModule,
