@@ -83,8 +83,8 @@ export function JobsFiltersPanel({
               Akıllı filtreler
             </div>
             <p className="mt-1 text-xs text-muted">
-              Aramayı sunucu tarafında çalıştırın, sonuçları sayfa sayfa
-              yükleyin.
+              Şirket, konum ve sıralama seçeneklerine göre filtrele. Değişiklikler
+              anında uygulanır.
             </p>
           </div>
 

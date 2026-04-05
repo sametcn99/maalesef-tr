@@ -3,6 +3,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 export class AddJobsSearchIndexes1775448000000 implements MigrationInterface {
   name = 'AddJobsSearchIndexes1775448000000';
 
+  private readonly searchDocumentExpression = `to_tsvector('simple', coalesce("title", '') || ' ' || coalesce("company", '') || ' ' || coalesce("location", '') || ' ' || coalesce("shortDescription", '') || ' ' || coalesce("fullDescription", ''))`;
+
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS pg_trgm`);
     await queryRunner.query(
@@ -18,7 +20,7 @@ export class AddJobsSearchIndexes1775448000000 implements MigrationInterface {
       `CREATE INDEX "IDX_jobs_short_description_trgm" ON "jobs" USING GIN ("shortDescription" gin_trgm_ops)`,
     );
     await queryRunner.query(
-      `CREATE INDEX "IDX_jobs_search_document" ON "jobs" USING GIN (to_tsvector('simple', concat_ws(' ', coalesce("title", ''), coalesce("company", ''), coalesce("location", ''), coalesce("shortDescription", ''), coalesce("fullDescription", ''))))`,
+      `CREATE INDEX "IDX_jobs_search_document" ON "jobs" USING GIN (${this.searchDocumentExpression})`,
     );
   }
 

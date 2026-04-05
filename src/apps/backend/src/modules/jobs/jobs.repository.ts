@@ -303,7 +303,7 @@ export class JobsRepository {
   }
 
   private buildSearchDocumentExpression(alias: string): string {
-    return `to_tsvector('simple', concat_ws(' ', coalesce(${alias}.title, ''), coalesce(${alias}.company, ''), coalesce(${alias}.location, ''), coalesce(${alias}.shortDescription, ''), coalesce(${alias}.fullDescription, '')))`;
+    return `to_tsvector('simple', coalesce(${alias}.title, '') || ' ' || coalesce(${alias}.company, '') || ' ' || coalesce(${alias}.location, '') || ' ' || coalesce(${alias}.shortDescription, '') || ' ' || coalesce(${alias}.fullDescription, ''))`;
   }
 
   private buildAppliedExistsSubquery(query: SelectQueryBuilder<Job>): string {
