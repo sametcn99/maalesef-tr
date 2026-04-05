@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useJobs } from "@/hooks/use-jobs";
 import { useStats } from "@/hooks/use-stats";
 import {
@@ -8,9 +9,14 @@ import {
   FeaturedJobsSection,
   PublishJobSection,
   HowItWorksSection,
-  TestimonialsSection,
   CTASection,
 } from "@/components/home";
+
+const TestimonialsSection = dynamic(() =>
+  import("@/components/home/testimonials-section").then(
+    (module) => module.TestimonialsSection,
+  ),
+);
 
 export default function Home() {
   const { jobs, loading: jobsLoading } = useJobs({ limit: 6 });

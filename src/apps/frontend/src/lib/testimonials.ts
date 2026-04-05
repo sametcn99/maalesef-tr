@@ -808,4 +808,565 @@ export const testimonials: Testimonial[] = [
     role: "Operational Excellence",
     text: "Mükemmellik arıyorum, mükemmel bir ret buldum.",
   },
+  // --- Kamu & Sosyal Etki ---
+  {
+    name: "Acar K.",
+    role: "Belediye Planlama Uzmanı",
+    text: "İmar planı revizyonu bundan uzun sürüyor. Burada kariyer planım iki tıkla iptal edildi.",
+  },
+  {
+    name: "Beliz Ş.",
+    role: "Sosyal Politika Koordinatörü",
+    text: "Toplumsal fayda projeleri yönetiyorum, kendi faydamı savunamadım. Ret cevabı da kamu ihalesi kadar kesin.",
+  },
+  {
+    name: "Cemre U.",
+    role: "Kamu İhale Analisti",
+    text: "Şartnameyi okudum, yine de elendim. Demek ki burada en düşük teklif bile umut değil.",
+  },
+  {
+    name: "Doğa Ç.",
+    role: "STK Proje Yöneticisi",
+    text: "Proje bütçesi yazarken bu kadar redline görmedim. Başvurum tek kalemde silindi.",
+  },
+  {
+    name: "Erkin N.",
+    role: "Fon Geliştirme Uzmanı",
+    text: "Hibe bulmak zor sanıyordum, meğer iş bulmak bonus round'muş. Fon yok, teklif yok.",
+  },
+  {
+    name: "Filiz O.",
+    role: "Sosyal Etki Analisti",
+    text: "Etkisini ölçtüm: özgüvenimde küçük, mizah anlayışımda büyük bir sıçrama oldu.",
+  },
+  {
+    name: "Gökçe T.",
+    role: "Kent Araştırmacısı",
+    text: "Şehirlerin nabzını tutuyorum ama şirketin kalbinde yer bulamadım. Kentsel dönüşüm var, kariyer dönüşümü yok.",
+  },
+  {
+    name: "Harun İ.",
+    role: "Hibe Program Sorumlusu",
+    text: "Başvuru formlarına hakimim. Ama bu form bana hakim geldi.",
+  },
+  {
+    name: "Ilgın P.",
+    role: "Gönüllü Operasyon Lideri",
+    text: "Gönüllüler bile daha uzun onboarding alıyor. Bana doğrudan kapanış toplantısı yaptılar.",
+  },
+  {
+    name: "Jülide D.",
+    role: "Yerel Yönetim Danışmanı",
+    text: "Belediyelerde süreç yavaş derler, burada ret belediye meclisinden hızlı geçti.",
+  },
+  // --- Üretim & Sanayi ---
+  {
+    name: "Koral A.",
+    role: "Üretim Planlama Şefi",
+    text: "Kapasite planı yaptım, belli ki benim için slot açılmamış. Hat durmadı, ben durdum.",
+  },
+  {
+    name: "Leman Y.",
+    role: "Kalite Sistemleri Uzmanı",
+    text: "ISO denetiminde bu kadar net uygunsuzluk görmedim. CV'me major nonconformity yazmışlar gibi.",
+  },
+  {
+    name: "Mertcan S.",
+    role: "Endüstriyel Otomasyon Mühendisi",
+    text: "PLC daha reset atmadan kariyerim shutdown oldu. Otomasyon seviyesi etkileyici.",
+  },
+  {
+    name: "Nursel E.",
+    role: "Süreç İyileştirme Lideri",
+    text: "Süreci kısaltalım derken beni tamamen süreçten çıkardılar. Lean rejection.",
+  },
+  {
+    name: "Okan C.",
+    role: "Tedarik Zinciri Planlayıcısı",
+    text: "Talep tahmini yaptım, arz tarafı beni istemedi. Stokta umut kalmamış.",
+  },
+  {
+    name: "Poyraz H.",
+    role: "Fabrika Dijitalleşme Uzmanı",
+    text: "Kağıtsız üretim olur da duygusuz ret olmaz sanmıştım. Oldu.",
+  },
+  {
+    name: "Rana G.",
+    role: "Bakım Güvenilirlik Mühendisi",
+    text: "Arıza kök neden analizi yaptım: sorun bende değil, sistem herkese aynı davranıyor.",
+  },
+  {
+    name: "Sarp Ö.",
+    role: "Yalın Dönüşüm Koçu",
+    text: "İsrafı önlüyorlar; beklenti biriktirmeye hiç izin vermiyorlar. Takdir ettim.",
+  },
+  {
+    name: "Tuğçe L.",
+    role: "Operasyonel Verimlilik Uzmanı",
+    text: "Verimlilik KPI'ı buysa madalya verilir. Ben daha sekmeyi kapatmadan reddedildim.",
+  },
+  {
+    name: "Ufkan B.",
+    role: "Endüstri 4.0 Koordinatörü",
+    text: "Akıllı fabrikalar gördüm, akıllı ret sistemi ilk kez görüyorum.",
+  },
+  // --- Pazarlama & Marka ---
+  {
+    name: "Vera M.",
+    role: "Marka Strateji Uzmanı",
+    text: "Marka tonu çok tutarlı: sıcak giriş, soğuk kapanış. Positioning cuk oturmuş.",
+  },
+  {
+    name: "Yaren K.",
+    role: "İçerik Pazarlama Müdürü",
+    text: "Bana gelen ret metni, hazırladığım çoğu kampanyadan daha iyi performans gösterdi.",
+  },
+  {
+    name: "Zafer T.",
+    role: "Performans Kreatifi",
+    text: "CTR'ım yüksekti ama HR conversion gelmedi. Funnel burada bıçak gibi kesiliyor.",
+  },
+  {
+    name: "Alara D.",
+    role: "Topluluk Pazarlama Lideri",
+    text: "Topluluk büyütürüm ama kendime bir koltuk büyütemedim. Discord'da daha çok sahipleniliyorum.",
+  },
+  {
+    name: "Borahan F.",
+    role: "CRM Kampanya Uzmanı",
+    text: "Lifecycle akışında yeni bir aşama öğrendim: submit, mail, hüzün.",
+  },
+  {
+    name: "Cansu E.",
+    role: "Etkinlik Pazarlama Yöneticisi",
+    text: "Lansman kurarım, sahne kurarım, beklenti kurarım. Sonuncusu burada söküldü.",
+  },
+  {
+    name: "Demir U.",
+    role: "Ürün Pazarlama Analisti",
+    text: "Go-to-market planım vardı, go-to-offer kısmı eksik kaldı.",
+  },
+  {
+    name: "Eylül S.",
+    role: "Influencer İlişkileri Sorumlusu",
+    text: "İkna kabiliyetim yüksektir, ama bu sistemi kimse collaborate'a çeviremiyor.",
+  },
+  {
+    name: "Fikret A.",
+    role: "Büyüme İçerik Editörü",
+    text: "Organik büyüme uzmanıyım. Sadece reddedilme geçmişim organik olarak büyüyor.",
+  },
+  {
+    name: "Güneş R.",
+    role: "Konumlandırma Danışmanı",
+    text: "Beni piyasada güzel konumlandırırım diyordum, meğer burada 'uygun değil' rafına aitmişim.",
+  },
+  // --- Sağlık Teknolojileri & Biyoteknoloji ---
+  {
+    name: "Handan V.",
+    role: "Klinik Veri Uzmanı",
+    text: "Veriyi temizledim, hipotezi kurdum, sonuç yine ret. Çalışma tek kolda sonlandı.",
+  },
+  {
+    name: "Işın K.",
+    role: "Medikal Operasyon Koordinatörü",
+    text: "Acil olmayan hiçbir süreç bu kadar hızlı ilerlememeli. Ama ret triage'ı kusursuz.",
+  },
+  {
+    name: "Jale P.",
+    role: "Biyoinformatik Analisti",
+    text: "Gen diziliminde bu kadar kesin eşleşmeme görmedim. Belli ki DNA'm role fit değil.",
+  },
+  {
+    name: "Kayra M.",
+    role: "Sağlık Ürünü Yöneticisi",
+    text: "Roadmap'im sağlamdı, prognosis kötü çıktı.",
+  },
+  {
+    name: "Levent O.",
+    role: "Regülasyon Belgeleri Uzmanı",
+    text: "Dokümantasyon tamdı ama onay mercii yine 'maalesef' dedi.",
+  },
+  {
+    name: "Melike T.",
+    role: "Laboratuvar Sistem Analisti",
+    text: "Numune kabulden hızlı ret kabul süreci var. SOP yazılsa örnek olur.",
+  },
+  {
+    name: "Nejat A.",
+    role: "Hasta Deneyimi Tasarımcısı",
+    text: "Empati yolculuğu çıkarıyorum, bana çıkarılan yol kısa sürdü.",
+  },
+  {
+    name: "Özlem C.",
+    role: "Dijital Sağlık Program Müdürü",
+    text: "Tele-sağlık projeleri yönetiyorum, tele-ret deneyimi yaşadım. Fiziksel olarak da vurdu.",
+  },
+  {
+    name: "Peri D.",
+    role: "Moleküler Veri Mühendisi",
+    text: "Mikro seviyede analiz yaparım, makro seviyede yine elenmişim.",
+  },
+  {
+    name: "Rauf Y.",
+    role: "Klinik Araştırma Planlayıcısı",
+    text: "Kontrol grubu olsam daha çok ilgi görürdüm. Başvuru kolu erkenden kapatıldı.",
+  },
+  // --- Oyun & Dijital Eğlence ---
+  {
+    name: "Selen B.",
+    role: "Oyun Ekonomisi Tasarımcısı",
+    text: "Soft currency'm boldu ama burada hard wall'a çarptım.",
+  },
+  {
+    name: "Taner K.",
+    role: "Seviye Tasarımcısı",
+    text: "Bu level'in çıkışı yokmuş. Spawn olur olmaz fail screen geldi.",
+  },
+  {
+    name: "Uraz E.",
+    role: "Live Ops Uzmanı",
+    text: "Canlı operasyon yönetiyorum, canlı canlı reddedildim. Event reward da yok.",
+  },
+  {
+    name: "Vuslat T.",
+    role: "Oyun Topluluğu Yöneticisi",
+    text: "Topluluk drama'sı görmüş insanım, yine de bu ret twist'i beklemiyordum.",
+  },
+  {
+    name: "Yekta A.",
+    role: "Teknik Oyun Yazarı",
+    text: "Lore yazıyorum, kendi hikayem burada kısa öykü bile olamadı.",
+  },
+  {
+    name: "Zümra N.",
+    role: "Oyuncu Davranışı Araştırmacısı",
+    text: "Player retention modelim var, employer retention bana hiç uğramadı.",
+  },
+  {
+    name: "Arin D.",
+    role: "Esports Operasyon Sorumlusu",
+    text: "Turnuva bracket'ında bye geçtim, işe alım bracket'ında ilk turda çıktım.",
+  },
+  {
+    name: "Barlas P.",
+    role: "Gelir Modeli Analisti",
+    text: "Monetization'ı biliyorum ama burada emotional damage free-to-play.",
+  },
+  {
+    name: "Ceyhun L.",
+    role: "Oyun Yayın Koordinatörü",
+    text: "Yayın açılmadan chat düşer ya, benim kariyer de öyle düştü.",
+  },
+  {
+    name: "Dila S.",
+    role: "QA Otomasyon Tasarımcısı",
+    text: "Regression test koştum, sonuç aynı: her build'de yine reddediliyorum.",
+  },
+  // --- Lojistik & Saha Operasyonları ---
+  {
+    name: "Ekin M.",
+    role: "Rota Optimizasyon Uzmanı",
+    text: "En kısa yolu bulurum, bu platform bana en kısa hayal kırıklığı rotasını verdi.",
+  },
+  {
+    name: "Fırat Y.",
+    role: "Saha Hizmetleri Planlayıcısı",
+    text: "Ekipleri sahaya diziyorum, beni tribüne gönderdiler.",
+  },
+  {
+    name: "Gözde A.",
+    role: "Mikro Dağıtım Operasyon Müdürü",
+    text: "Dakika bazlı teslimat yönetiyorum. Dakika altı ret de gördüm artık.",
+  },
+  {
+    name: "Hazar K.",
+    role: "Fulfillment Süreç Analisti",
+    text: "Sipariş tamamlanır sanmıştım, meğer başvuru iptal akışına düşmüş.",
+  },
+  {
+    name: "Iraz C.",
+    role: "Son Kilometre İyileştirme Uzmanı",
+    text: "Last mile çözülür de last hope bu kadar çabuk kaybolur muymuş.",
+  },
+  {
+    name: "Korhan T.",
+    role: "Filo Performans Koordinatörü",
+    text: "Araç doluluk oranı tamam, kariyer doluluk oranı sıfır.",
+  },
+  {
+    name: "Lara U.",
+    role: "Depo Otomasyon Lideri",
+    text: "Raf sistemleri düzenli, duygularım değil. Ret makinesi iyi çalışıyor.",
+  },
+  {
+    name: "Menderes E.",
+    role: "Talep Tahmin Uzmanı",
+    text: "Tahmin modelim bu kadar sapmazdı. Kendime fazla güvenmişim.",
+  },
+  {
+    name: "Nehir B.",
+    role: "Operasyon Kontrol Merkezi Uzmanı",
+    text: "Alarm yönetiyorum, bu mail resmen kişisel alarm oldu.",
+  },
+  {
+    name: "Onat D.",
+    role: "Sevkiyat Kalite Sorumlusu",
+    text: "Paket hasarsız, ego hafif ezik. Teslimat tamamlandı.",
+  },
+  // --- Fintech & Regülasyon ---
+  {
+    name: "Pelin T.",
+    role: "Uyum Teknolojileri Analisti",
+    text: "Regülasyon metinleri bile bu kadar katı değil. Uyum yoksa umut da yok.",
+  },
+  {
+    name: "Rüya K.",
+    role: "Dolandırıcılık Önleme Uzmanı",
+    text: "Fraud'u anlarım, bu ret gerçek. Tamamen otantik bir hayal kırıklığı.",
+  },
+  {
+    name: "Selçuk A.",
+    role: "Ödeme Operasyon Mimarı",
+    text: "Transaction declined mesajını yıllardır görüyorum. İlk kez ben kart oldum.",
+  },
+  {
+    name: "Tansu M.",
+    role: "Fintech İş Geliştirme Müdürü",
+    text: "Yeni ortaklıklar kurarım, bu şirket benimle settlement'a bile gelmedi.",
+  },
+  {
+    name: "Ulya E.",
+    role: "Regülasyon Raporlama Uzmanı",
+    text: "Tablo hazırladım: başvuru sayısı 1, onay sayısı 0, açıklama kısmı 'maalesef'.",
+  },
+  {
+    name: "Vefa D.",
+    role: "Dijital Cüzdan Ürün Sahibi",
+    text: "Wallet dolu olabilir ama moral bakiyesi eksiye düştü.",
+  },
+  {
+    name: "Yade G.",
+    role: "Risk Motoru Analisti",
+    text: "Motor doğru çalışmış; beni yüksek riskli umut yatırımı olarak sınıflamış.",
+  },
+  {
+    name: "Zeki C.",
+    role: "Açık Bankacılık Entegrasyon Lideri",
+    text: "API'ler bağlandı, ben bağ kuramadım.",
+  },
+  {
+    name: "Ahu N.",
+    role: "AML Süreç Tasarımcısı",
+    text: "Şüpheli işlem görsem incelerim, burada şüphe yok: direkt ret.",
+  },
+  {
+    name: "Barın T.",
+    role: "Kart Program Yöneticisi",
+    text: "Temassız ödeme gibi temassız işe alım. Dokunmadan reddediyorlar.",
+  },
+  // --- İnsan Kaynakları & Organizasyon ---
+  {
+    name: "Cemil O.",
+    role: "İşveren Markası Uzmanı",
+    text: "İşveren markası güçlüymüş gerçekten; reddedilirken bile kampanyaya ikna oluyorsun.",
+  },
+  {
+    name: "Derya V.",
+    role: "Organizasyonel Gelişim Danışmanı",
+    text: "Şirketleri büyütürüm, kendi sabrım küçüldü.",
+  },
+  {
+    name: "Ecehan S.",
+    role: "Yetenek Analitiği Uzmanı",
+    text: "Veriye bakınca benim seçilmem gerekirdi. Meğer veri değil kader dashboard'u kullanıyorlarmış.",
+  },
+  {
+    name: "Ferda K.",
+    role: "Çalışan Deneyimi Tasarımcısı",
+    text: "Çalışan deneyimini tasarlıyorum, aday deneyimi bana sert bir workshop verdi.",
+  },
+  {
+    name: "Gülin T.",
+    role: "Öğrenme Programları Yöneticisi",
+    text: "Bugünkü öğrenim: umut asenkron, ret senkron çalışıyor.",
+  },
+  {
+    name: "Hande E.",
+    role: "İç İletişim Editörü",
+    text: "İç iletişim yazıyorum, dışarıdan gelen bu mesaj içime işledi.",
+  },
+  {
+    name: "İlayda M.",
+    role: "Performans Sistemleri Uzmanı",
+    text: "OKR yazmayı bilirim. Bu çeyrek hedefim: bir kez olsun shortlist'e kalmak.",
+  },
+  {
+    name: "Kutsi A.",
+    role: "Kültür Program Lideri",
+    text: "Kültür uyumu yok dediler. Ben de kültür şoku yaşadım.",
+  },
+  {
+    name: "Lora D.",
+    role: "Kariyer Gelişim Partneri",
+    text: "Başkalarına kariyer yolu çizerim. Kendime çizdiğim yol burada çıkmaz sokak.",
+  },
+  {
+    name: "Mine Y.",
+    role: "İşe Alım Operasyon Analisti",
+    text: "Sistemin nasıl çalıştığını biliyorum. İçeriden bakınca da acıyormuş.",
+  },
+  // --- Veri Platformları & Altyapı ---
+  {
+    name: "Nail U.",
+    role: "Veri Platform Uzmanı",
+    text: "Pipeline kuruyorum, benim pipeline 'rejected' tablosuna dump oldu.",
+  },
+  {
+    name: "Oylum K.",
+    role: "Gözlemlenebilirlik Mühendisi",
+    text: "Trace'ledim, span'lerime baktım; hata yok, sadece sonuç çok dürüst.",
+  },
+  {
+    name: "Pera A.",
+    role: "Akış İşleme Geliştiricisi",
+    text: "Event stream gibi aktı: apply edildi, işlendi, reddedildi.",
+  },
+  {
+    name: "Rami T.",
+    role: "DataOps Koordinatörü",
+    text: "Orkestrasyon kusursuz. Tek failed task benim beklentim.",
+  },
+  {
+    name: "Sudehan E.",
+    role: "Şema Yönetişim Analisti",
+    text: "Şema uyumluluğu aradılar, benim tabloyu migration'sız drop ettiler.",
+  },
+  {
+    name: "Timur C.",
+    role: "Lakehouse Mimarı",
+    text: "Veri gölü kurarım, burada umut göletim bile kuruyamadı.",
+  },
+  {
+    name: "Umay D.",
+    role: "Metaveri Program Yöneticisi",
+    text: "Bağlam eklemeyi severim. Burada bağlam tek kelime: olmaz.",
+  },
+  {
+    name: "Vural G.",
+    role: "Altyapı Maliyet Analisti",
+    text: "Cost optimize ediyorum, şirket de aday üzerinde zaman maliyetini optimize etmiş.",
+  },
+  {
+    name: "Yalın S.",
+    role: "ETL Güvenilirlik Sorumlusu",
+    text: "Retry mekanizması var mı diye baktım. Yok, bu job terminal state.",
+  },
+  {
+    name: "Zerrin B.",
+    role: "Veri Kalite Ürün Sahibi",
+    text: "Quality gate'den kalmışım. Hem de log bırakmadan.",
+  },
+  // --- Emlak & Yapılı Çevre Teknolojileri ---
+  {
+    name: "Afra L.",
+    role: "PropTech Ürün Uzmanı",
+    text: "Akıllı bina projeleri gördüm, akıllı ret tasarımı ilk defa görüyorum.",
+  },
+  {
+    name: "Berke M.",
+    role: "Portföy Analitiği Yöneticisi",
+    text: "Varlık dağılımım iyi, kariyer dağılımım tek kalem zarar.",
+  },
+  {
+    name: "Cavidan T.",
+    role: "Yapı Bilgi Modelleme Uzmanı",
+    text: "3D model kurarım, burada geleceğimin wireframe'i bile çıkmadı.",
+  },
+  {
+    name: "Dilara K.",
+    role: "Kiralama Operasyon Lideri",
+    text: "Mülkü kiraya veririm, kendimi kadroya veremedim.",
+  },
+  {
+    name: "Efecan A.",
+    role: "Sürdürülebilir Bina Danışmanı",
+    text: "Yeşil dönüşüm tamam, benim umut döngüsü sürdürülemedi.",
+  },
+  {
+    name: "Feyza U.",
+    role: "Akıllı Bina Entegrasyon Uzmanı",
+    text: "Sensörler bağlanıyor, entegrasyonlar tamam. Sadece ben sisteme attach olamadım.",
+  },
+  {
+    name: "Görkem D.",
+    role: "Şantiye Teknoloji Koordinatörü",
+    text: "Şantiyede herkes baret takar, burada darbe direkt kafaya geldi.",
+  },
+  {
+    name: "Hicran Y.",
+    role: "Tesis Performans Analisti",
+    text: "Bina performansını ölçerim. Bugün moral performansım düşük çıktı.",
+  },
+  {
+    name: "İdil O.",
+    role: "Gayrimenkul Veri Editörü",
+    text: "İlan metni düzenlerim, kendi hikayemin başlığını 'uygun aday değil' yaptılar.",
+  },
+  {
+    name: "Koraycan E.",
+    role: "Mekansal Deneyim Tasarımcısı",
+    text: "Alan kurgusu yaparım, bana hiç alan bırakmadılar.",
+  },
+  // --- Müşteri Deneyimi & Gelir Operasyonları ---
+  {
+    name: "Lalehan T.",
+    role: "Müşteri Eğitim Uzmanı",
+    text: "Eğitim verirken sabırlıyım, bu ret bana hızlandırılmış ders oldu.",
+  },
+  {
+    name: "Meriç K.",
+    role: "Gelir Operasyon Analisti",
+    text: "Revenue funnel'a hakimim; benim funnel awareness'ta kaldı.",
+  },
+  {
+    name: "Nevin A.",
+    role: "İptal Önleme Yöneticisi",
+    text: "Churn azaltıyorum ama kendi elenmemi önleyemedim.",
+  },
+  {
+    name: "Onurhan S.",
+    role: "Destek Kalite Lideri",
+    text: "Kalite formu doldursam 'ret tonu çok temiz, etki seviyesi yüksek' yazarım.",
+  },
+  {
+    name: "Pınarcan D.",
+    role: "Hesap Sağlığı Uzmanı",
+    text: "Account health iyi, applicant health sallanıyor.",
+  },
+  {
+    name: "Reyhan T.",
+    role: "Teknik Destek Program Müdürü",
+    text: "Issue çözmeyi severim. Bu issue'nun çözümü bende yokmuş.",
+  },
+  {
+    name: "Seçkin M.",
+    role: "Yenileme Operasyon Sorumlusu",
+    text: "Renewal kovalarım, benim için ilk teklif bile gelmedi.",
+  },
+  {
+    name: "Tijen E.",
+    role: "Müşteri Yolculuğu Analisti",
+    text: "Journey map çizdim; temas noktası çok, mutlu son yok.",
+  },
+  {
+    name: "Ufukhan C.",
+    role: "Çözüm Aktivasyon Uzmanı",
+    text: "Onboarding başlatırım, bana direkt offboarding hissi verdiler.",
+  },
+  {
+    name: "Yelda S.",
+    role: "Servis Tasarım Araştırmacısı",
+    text: "Servis blueprint çıkarıyorum, burada blueprint'in sonunda sadece kırmızı bir X var.",
+  },
 ];

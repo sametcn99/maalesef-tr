@@ -190,6 +190,8 @@ body {
 
 .marquee-scroll {
   animation: marquee-up var(--marquee-duration, 30s) linear infinite;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .marquee-scroll.marquee-reverse {
@@ -211,6 +213,14 @@ body {
 
 .marquee-scroll:hover {
   animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-scroll,
+  .marquee-scroll.marquee-reverse {
+    animation: none;
+    transform: translateY(0);
+  }
 }
 
 /* Scrollbar */
