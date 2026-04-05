@@ -2,6 +2,15 @@
 
 import { JobCardSkeleton } from "@/components/job";
 
+const JOBS_PAGE_FALLBACK_SKELETON_KEYS = [
+  "jobs-page-suspense-fallback-1",
+  "jobs-page-suspense-fallback-2",
+  "jobs-page-suspense-fallback-3",
+  "jobs-page-suspense-fallback-4",
+  "jobs-page-suspense-fallback-5",
+  "jobs-page-suspense-fallback-6",
+] as const;
+
 export function JobsPageFallback() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
@@ -11,8 +20,8 @@ export function JobsPageFallback() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
-        {Array.from({ length: 6 }).map((_, index) => (
-          <JobCardSkeleton key={`jobs-page-suspense-fallback-${index}`} />
+        {JOBS_PAGE_FALLBACK_SKELETON_KEYS.map((skeletonKey) => (
+          <JobCardSkeleton key={skeletonKey} />
         ))}
       </div>
     </div>

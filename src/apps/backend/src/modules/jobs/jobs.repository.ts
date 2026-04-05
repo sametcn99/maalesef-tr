@@ -36,6 +36,8 @@ export interface JobsListResult {
 
 @Injectable()
 export class JobsRepository {
+  private static readonly APPLICANT_COUNT_ALIAS = 'job_applicant_count';
+
   constructor(
     @InjectRepository(Job)
     private readonly repository: Repository<Job>,
@@ -71,7 +73,7 @@ export class JobsRepository {
       .leftJoinAndSelect('job.createdBy', 'user')
       .leftJoin('job.applications', 'application')
       .select(['job', 'user.id', 'user.name', 'user.email', 'user.slug'])
-      .addSelect('COUNT(application.id)', 'job_applicantCount')
+      .addSelect('COUNT(application.id)', JobsRepository.APPLICANT_COUNT_ALIAS)
       .where('job.id = :id', { id })
       .groupBy('job.id')
       .addGroupBy('user.id')
@@ -85,7 +87,7 @@ export class JobsRepository {
       .leftJoinAndSelect('job.createdBy', 'user')
       .leftJoin('job.applications', 'application')
       .select(['job', 'user.id', 'user.name', 'user.email', 'user.slug'])
-      .addSelect('COUNT(application.id)', 'job_applicantCount')
+      .addSelect('COUNT(application.id)', JobsRepository.APPLICANT_COUNT_ALIAS)
       .where('job.slug = :slug', { slug })
       .groupBy('job.id')
       .addGroupBy('user.id')
@@ -119,7 +121,7 @@ export class JobsRepository {
       .leftJoinAndSelect('job.createdBy', 'user')
       .leftJoin('job.applications', 'application')
       .select(['job', 'user.id', 'user.name', 'user.email', 'user.slug'])
-      .addSelect('COUNT(application.id)', 'job_applicantCount')
+      .addSelect('COUNT(application.id)', JobsRepository.APPLICANT_COUNT_ALIAS)
       .where('job.createdById = :userId', { userId })
       .groupBy('job.id')
       .addGroupBy('user.id')
@@ -155,7 +157,10 @@ export class JobsRepository {
       .createQueryBuilder('job')
       .leftJoinAndSelect('job.createdBy', 'user')
       .select(['job', 'user.id', 'user.name', 'user.email', 'user.slug'])
-      .addSelect(this.buildApplicantCountSubquery(), 'job_applicantCount');
+      .addSelect(
+        this.buildApplicantCountSubquery(),
+        JobsRepository.APPLICANT_COUNT_ALIAS,
+      );
 
     if (filters.userId) {
       query
@@ -258,7 +263,7 @@ export class JobsRepository {
         return;
       case 'most_applied':
         query
-          .orderBy('job_applicantCount', 'DESC')
+          .orderBy(JobsRepository.APPLICANT_COUNT_ALIAS, 'DESC')
           .addOrderBy('job.createdAt', 'DESC')
           .addOrderBy('job.id', 'DESC');
         return;
@@ -333,7 +338,9 @@ export class JobsRepository {
     return items.map((job, index) => {
       const currentRaw = raw[index] ?? {};
 
-      job.applicantCount = Number(currentRaw.job_applicantCount ?? 0);
+      job.applicantCount = Number(
+        currentRaw[JobsRepository.APPLICANT_COUNT_ALIAS] ?? 0,
+      );
 
       if (currentRaw.job_isApplied !== undefined) {
         job.isApplied = this.parseBoolean(currentRaw.job_isApplied);

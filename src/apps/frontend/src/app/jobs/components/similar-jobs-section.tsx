@@ -4,6 +4,13 @@ import { Sparkles } from "lucide-react";
 import { JobCard, JobCardSkeleton } from "@/components/job";
 import type { Job } from "@/types";
 
+const SIMILAR_JOB_SKELETON_KEYS = [
+  "similar-job-skeleton-1",
+  "similar-job-skeleton-2",
+  "similar-job-skeleton-3",
+  "similar-job-skeleton-4",
+] as const;
+
 interface SimilarJobsSectionProps {
   jobsLoading: boolean;
   similarJobs: Job[];
@@ -31,8 +38,8 @@ export function SimilarJobsSection({
 
       {jobsLoading && similarJobs.length === 0 ? (
         <div className="grid gap-4 sm:grid-cols-2">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <JobCardSkeleton key={`similar-job-skeleton-${index}`} />
+          {SIMILAR_JOB_SKELETON_KEYS.map((skeletonKey) => (
+            <JobCardSkeleton key={skeletonKey} />
           ))}
         </div>
       ) : similarJobs.length > 0 ? (

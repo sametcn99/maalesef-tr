@@ -22,7 +22,10 @@ export function JobDetailSidebar({
       <div className="sticky top-24 space-y-4">
         <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 text-amber-900 shadow-sm">
           <div className="flex gap-3">
-            <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-600" />
+            <AlertTriangle
+              size={18}
+              className="mt-0.5 shrink-0 text-amber-600"
+            />
             <p className="text-xs leading-relaxed">
               <strong>Dikkat:</strong> Bu ilan ve şirket tamamen kurgusaldır.
             </p>
@@ -32,9 +35,7 @@ export function JobDetailSidebar({
         <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
           <div className="mb-1 flex items-center gap-2">
             <Send size={16} className="text-accent" />
-            <h2 className="text-base font-semibold text-foreground">
-              Başvuru
-            </h2>
+            <h2 className="text-base font-semibold text-foreground">Başvuru</h2>
           </div>
           <p className="mb-5 text-sm text-muted">
             Bu pozisyona başvurmak için başvuru formunu doldurun.

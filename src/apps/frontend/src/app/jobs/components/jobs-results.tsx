@@ -7,6 +7,20 @@ import { JobCard, JobCardSkeleton } from "@/components/job";
 import { EmptyState, ErrorCard } from "@/components/ui";
 import type { Job } from "@/types";
 
+const INITIAL_JOB_SKELETON_KEYS = [
+  "job-skeleton-1",
+  "job-skeleton-2",
+  "job-skeleton-3",
+  "job-skeleton-4",
+  "job-skeleton-5",
+  "job-skeleton-6",
+] as const;
+
+const MORE_JOB_SKELETON_KEYS = [
+  "jobs-page-more-skeleton-1",
+  "jobs-page-more-skeleton-2",
+] as const;
+
 interface JobsResultsProps {
   jobs: Job[];
   isInitialLoading: boolean;
@@ -37,8 +51,8 @@ export function JobsResults({
   if (isInitialLoading) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
-        {Array.from({ length: 6 }).map((_, index) => (
-          <JobCardSkeleton key={`job-skeleton-${index}`} />
+        {INITIAL_JOB_SKELETON_KEYS.map((skeletonKey) => (
+          <JobCardSkeleton key={skeletonKey} />
         ))}
       </div>
     );
@@ -92,8 +106,8 @@ export function JobsResults({
 
       {loadingMore && (
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          {Array.from({ length: 2 }).map((_, index) => (
-            <JobCardSkeleton key={`jobs-page-more-skeleton-${index}`} />
+          {MORE_JOB_SKELETON_KEYS.map((skeletonKey) => (
+            <JobCardSkeleton key={skeletonKey} />
           ))}
         </div>
       )}

@@ -322,7 +322,11 @@ function JobsPageContent() {
   }, [fetchNextPage, hasMore, refetch]);
 
   const activeFilterChips = useMemo(() => {
-    const chips: Array<{ key: FilterChipKey; label: string; onClear: () => void }> = [];
+    const chips: Array<{
+      key: FilterChipKey;
+      label: string;
+      onClear: () => void;
+    }> = [];
 
     if (searchValue.trim()) {
       chips.push({

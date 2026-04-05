@@ -56,7 +56,10 @@ export function JobsPageHeader({
             onChange={(event) => onSearchInputChange(event.target.value)}
           >
             <TextField.Slot>
-              <Search size={18} className="text-muted-light transition-colors" />
+              <Search
+                size={18}
+                className="text-muted-light transition-colors"
+              />
             </TextField.Slot>
 
             {searchInput && (
