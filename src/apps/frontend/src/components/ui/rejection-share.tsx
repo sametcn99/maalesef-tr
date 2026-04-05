@@ -4,15 +4,12 @@ import { trackShare } from "@/lib/api";
 import { REJECTION_SHARE_MESSAGES } from "@/lib/rejection-share-messages";
 import { Share2 } from "lucide-react";
 import { FaLinkedin } from "react-icons/fa6";
-import { useState } from "react";
 
 interface RejectionShareProps {
   message?: string;
 }
 
 export function RejectionShare({ message: propMessage }: RejectionShareProps) {
-  const [_copied, setCopied] = useState(false);
-
   const getMessage = () => {
     if (propMessage) return propMessage;
     return REJECTION_SHARE_MESSAGES[
@@ -24,14 +21,14 @@ export function RejectionShare({ message: propMessage }: RejectionShareProps) {
     const message = getMessage();
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}`;
     window.open(url, "_blank");
-    _handleTrackShare();
+    void handleTrackShare();
   };
 
   const handleShareLinkedin = () => {
     const message = getMessage();
     const url = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(message)}`;
     window.open(url, "_blank");
-    _handleTrackShare();
+    void handleTrackShare();
   };
 
   const handleWebShare = async () => {
@@ -43,27 +40,19 @@ export function RejectionShare({ message: propMessage }: RejectionShareProps) {
           text: message,
           url: window.location.origin,
         });
-        // Track the share
-        await _handleTrackShare();
+        await handleTrackShare();
       } catch (err) {
         console.error("Paylaşım hatası:", err);
       }
     }
   };
 
-  const _handleTrackShare = async () => {
+  const handleTrackShare = async () => {
     try {
       await trackShare();
     } catch (err) {
       console.error("Share tracking error:", err);
     }
-  };
-
-  const _handleCopy = () => {
-    const message = getMessage();
-    navigator.clipboard.writeText(message);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   return (

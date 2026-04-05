@@ -37,6 +37,42 @@ export interface Job {
   createdAt: string;
   createdBy?: JobOwner;
   applicantCount?: number;
+  isApplied?: boolean;
+  isViewed?: boolean;
+}
+
+export const JOB_INTERACTION_FILTERS = ["all", "only", "hide"] as const;
+export type JobInteractionFilter = (typeof JOB_INTERACTION_FILTERS)[number];
+
+export const JOB_SORT_OPTIONS = [
+  "newest",
+  "oldest",
+  "most_applied",
+  "title_asc",
+  "title_desc",
+  "company_asc",
+  "company_desc",
+] as const;
+export type JobSortOption = (typeof JOB_SORT_OPTIONS)[number];
+
+export interface JobsQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  company?: string;
+  location?: string;
+  sort?: JobSortOption;
+  applied?: JobInteractionFilter;
+  viewed?: JobInteractionFilter;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasMore: boolean;
 }
 
 export interface Application {

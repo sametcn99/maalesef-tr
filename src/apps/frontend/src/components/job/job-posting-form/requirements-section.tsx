@@ -1,34 +1,34 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { TextField, Button } from "@radix-ui/themes";
 import { Plus, ListChecks, X } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
+import { useJobPostingDraftStore } from "@/stores/job-posting-draft-store";
 import { SectionCard } from "./section-card";
 
-interface RequirementsSectionProps {
-  requirements: string[];
-  setRequirements: (requirements: string[]) => void;
-}
+export function RequirementsSection() {
+  const {
+    requirements,
+    requirementInput,
+    setRequirementInput,
+    addRequirement,
+    removeRequirement,
+  } = useJobPostingDraftStore(
+    useShallow((state) => ({
+      requirements: state.requirements,
+      requirementInput: state.requirementInput,
+      setRequirementInput: state.setRequirementInput,
+      addRequirement: state.addRequirement,
+      removeRequirement: state.removeRequirement,
+    })),
+  );
 
-export function RequirementsSection({
-  requirements,
-  setRequirements,
-}: RequirementsSectionProps) {
-  const [requirementInput, setRequirementInput] = useState("");
-
-  const addRequirement = useCallback(() => {
-    const val = requirementInput.trim();
-    if (val && !requirements.includes(val)) {
-      setRequirements([...requirements, val]);
-      setRequirementInput("");
-    }
-  }, [requirementInput, requirements, setRequirements]);
-
-  const removeRequirement = useCallback(
+  const handleRemoveRequirement = useCallback(
     (index: number) => {
-      setRequirements(requirements.filter((_, i) => i !== index));
+      removeRequirement(index);
     },
-    [requirements, setRequirements],
+    [removeRequirement],
   );
 
   return (
@@ -91,7 +91,7 @@ export function RequirementsSection({
               <button
                 data-umami-event="job_job_posting_form_requirements_section_remove_click"
                 type="button"
-                onClick={() => removeRequirement(i)}
+                onClick={() => handleRemoveRequirement(i)}
                 className="ml-1 text-muted hover:text-red-500 transition-colors"
               >
                 <X size={14} />

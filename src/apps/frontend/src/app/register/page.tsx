@@ -1,38 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button, TextField } from "@radix-ui/themes";
 import { Mail, Lock, User, UserPlus, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { useAuth } from "@/context/auth-context";
+import { useShallow } from "zustand/react/shallow";
+import { useAuthFlowsStore } from "@/stores/auth-flows-store";
 
 export default function RegisterPage() {
-  const { register } = useAuth();
   const router = useRouter();
+  const {
+    name,
+    email,
+    password,
+    loading,
+    error,
+    setName,
+    setEmail,
+    setPassword,
+    submitRegister,
+    resetRegister,
+  } = useAuthFlowsStore(
+    useShallow((state) => ({
+      name: state.registerName,
+      email: state.registerEmail,
+      password: state.registerPassword,
+      loading: state.registerLoading,
+      error: state.registerError,
+      setName: state.setRegisterName,
+      setEmail: state.setRegisterEmail,
+      setPassword: state.setRegisterPassword,
+      submitRegister: state.submitRegister,
+      resetRegister: state.resetRegister,
+    })),
+  );
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    resetRegister();
+    return resetRegister;
+  }, [resetRegister]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    const result = await register(name, email, password);
+    const result = await submitRegister();
 
     if (result.success) {
       toast.success("Kayıt başarılı! Hoş geldiniz.");
       router.push("/");
-    } else {
-      setError(result.error || "Kayıt oluşturulamadı.");
     }
-
-    setLoading(false);
   }
 
   return (

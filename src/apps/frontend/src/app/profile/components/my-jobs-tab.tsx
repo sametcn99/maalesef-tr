@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { Button, Dialog } from "@radix-ui/themes";
 import { AlertTriangle, Trash2, Briefcase } from "lucide-react";
 import { TableSkeleton } from "@/components/ui/skeletons";
 import { ErrorCard } from "@/components/ui/error-card";
 import type { Job } from "@/types";
+import { useProfileUiStore } from "@/stores/profile-ui-store";
 
 interface MyJobsTabProps {
   jobs: Job[];
@@ -16,8 +17,25 @@ interface MyJobsTabProps {
 }
 
 export function MyJobsTab({ jobs, loading, error, removeJob }: MyJobsTabProps) {
-  const [jobToDelete, setJobToDelete] = useState<Job | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const {
+    jobToDelete,
+    isDeleting,
+    jobDeleteError,
+    setJobToDelete,
+    setIsDeletingJob,
+    setJobDeleteError,
+    resetJobDeleteState,
+  } = useProfileUiStore(
+    useShallow((state) => ({
+      jobToDelete: state.jobToDelete,
+      isDeleting: state.isDeletingJob,
+      jobDeleteError: state.jobDeleteError,
+      setJobToDelete: state.setJobToDelete,
+      setIsDeletingJob: state.setIsDeletingJob,
+      setJobDeleteError: state.setJobDeleteError,
+      resetJobDeleteState: state.resetJobDeleteState,
+    })),
+  );
 
   if (error) return <ErrorCard message={error} />;
 
@@ -41,12 +59,19 @@ export function MyJobsTab({ jobs, loading, error, removeJob }: MyJobsTabProps) {
 
   const handleDelete = async () => {
     if (!jobToDelete) return;
-    setIsDeleting(true);
+    setJobDeleteError(null);
+    setIsDeletingJob(true);
     try {
       await removeJob(jobToDelete.id);
-      setJobToDelete(null);
+      resetJobDeleteState();
+    } catch (removeError) {
+      setJobDeleteError(
+        removeError instanceof Error
+          ? removeError.message
+          : "İlan silinirken bir sorun oluştu.",
+      );
     } finally {
-      setIsDeleting(false);
+      setIsDeletingJob(false);
     }
   };
 
@@ -101,7 +126,7 @@ export function MyJobsTab({ jobs, loading, error, removeJob }: MyJobsTabProps) {
       {/* Confirmation Dialog */}
       <Dialog.Root
         open={jobToDelete !== null}
-        onOpenChange={(open) => !open && !isDeleting && setJobToDelete(null)}
+        onOpenChange={(open) => !open && !isDeleting && resetJobDeleteState()}
       >
         <Dialog.Content className="max-w-lg border border-border shadow-xl">
           <Dialog.Title className="mb-2 flex items-center gap-3 text-lg font-semibold text-foreground">
@@ -117,12 +142,18 @@ export function MyJobsTab({ jobs, loading, error, removeJob }: MyJobsTabProps) {
               tüm başvurular silinecektir.
             </p>
 
+            {jobDeleteError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {jobDeleteError}
+              </div>
+            )}
+
             <div className="flex justify-end gap-3">
               <Button
                 data-umami-event="profile_my_jobs_delete_cancel_click"
                 variant="soft"
                 color="gray"
-                onClick={() => setJobToDelete(null)}
+                onClick={resetJobDeleteState}
                 disabled={isDeleting}
               >
                 Vazgeç

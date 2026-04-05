@@ -1,272 +1,477 @@
 "use client";
 
-import { useJobInteractions, useJobs } from "@/hooks";
-import { JobCard } from "@/components/job";
-import { JobCardSkeleton } from "@/components/job";
-import { ErrorCard, EmptyState } from "@/components/ui";
-import {
-  Briefcase,
-  Search,
-  PlusCircle,
-  AlertTriangle,
-  Filter,
-} from "lucide-react";
-import { TextField, Button, Select } from "@radix-ui/themes";
-import { useState, useMemo } from "react";
+import { JobsFiltersPanel } from "@/app/jobs/components/jobs-filters-panel";
+import { JobsFictionDisclaimer } from "@/app/jobs/components/jobs-fiction-disclaimer";
+import { JobsPageFallback } from "@/app/jobs/components/jobs-page-fallback";
+import { JobsPageHeader } from "@/app/jobs/components/jobs-page-header";
+import { JobsResults } from "@/app/jobs/components/jobs-results";
 import { useAuth } from "@/context/auth-context";
-import Link from "next/link";
+import { useJobsFeed } from "@/hooks";
+import { useJobsFeedUiStore } from "@/stores/jobs-feed-ui-store";
+import {
+  JOB_INTERACTION_FILTERS,
+  JOB_SORT_OPTIONS,
+  type JobInteractionFilter,
+  type JobSortOption,
+} from "@/types";
+import {
+  Suspense,
+  startTransition,
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useShallow } from "zustand/react/shallow";
 
-type InteractionFilter = "all" | "only" | "hide";
+const FEED_TEXT_FILTER_DEBOUNCE_MS = 375;
 
-export default function JobsPage() {
-  const { jobs, loading, error } = useJobs();
+const SORT_LABELS: Record<JobSortOption, string> = {
+  newest: "En yeni",
+  oldest: "En eski",
+  most_applied: "En çok başvuru alan",
+  title_asc: "Başlık A-Z",
+  title_desc: "Başlık Z-A",
+  company_asc: "Şirket A-Z",
+  company_desc: "Şirket Z-A",
+};
+
+type FilterChipKey =
+  | "search"
+  | "company"
+  | "location"
+  | "sort"
+  | "applied"
+  | "viewed";
+
+function getInteractionFilter(value: string | null): JobInteractionFilter {
+  return JOB_INTERACTION_FILTERS.includes(value as JobInteractionFilter)
+    ? (value as JobInteractionFilter)
+    : "all";
+}
+
+function getSortOption(value: string | null): JobSortOption {
+  return JOB_SORT_OPTIONS.includes(value as JobSortOption)
+    ? (value as JobSortOption)
+    : "newest";
+}
+
+function JobsPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const {
-    isApplied,
-    isViewed,
-    loading: interactionsLoading,
-  } = useJobInteractions();
-  const [search, setSearch] = useState("");
-  const [appliedFilter, setAppliedFilter] = useState<InteractionFilter>("all");
-  const [viewedFilter, setViewedFilter] = useState<InteractionFilter>("all");
-  const isInitialLoading = loading && jobs.length === 0;
+    searchInput,
+    companyInput,
+    locationInput,
+    syncFromQuery,
+    setSearchInput,
+    setCompanyInput,
+    setLocationInput,
+  } = useJobsFeedUiStore(
+    useShallow((state) => ({
+      searchInput: state.searchInput,
+      companyInput: state.companyInput,
+      locationInput: state.locationInput,
+      syncFromQuery: state.syncFromQuery,
+      setSearchInput: state.setSearchInput,
+      setCompanyInput: state.setCompanyInput,
+      setLocationInput: state.setLocationInput,
+    })),
+  );
   const canPublishJob = !authLoading && isAuthenticated;
   const canUseInteractionFilters = !authLoading && isAuthenticated;
+  const searchValue = searchParams.get("search") ?? "";
+  const companyValue = searchParams.get("company") ?? "";
+  const locationValue = searchParams.get("location") ?? "";
+  const sortValue = getSortOption(searchParams.get("sort"));
+  const appliedFilter = getInteractionFilter(searchParams.get("applied"));
+  const viewedFilter = getInteractionFilter(searchParams.get("viewed"));
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const deferredSearchInput = useDeferredValue(searchInput);
+  const deferredCompanyInput = useDeferredValue(companyInput);
+  const deferredLocationInput = useDeferredValue(locationInput);
+
+  const updateQuery = useCallback(
+    (updates: Record<string, string | null>) => {
+      const nextSearchParams = new URLSearchParams(searchParams.toString());
+
+      for (const [key, value] of Object.entries(updates)) {
+        const normalized = value?.trim() ?? "";
+        const shouldClear =
+          normalized.length === 0 ||
+          (key === "sort" && normalized === "newest") ||
+          ((key === "applied" || key === "viewed") && normalized === "all");
+
+        if (shouldClear) {
+          nextSearchParams.delete(key);
+          continue;
+        }
+
+        nextSearchParams.set(key, normalized);
+      }
+
+      const nextQuery = nextSearchParams.toString();
+
+      startTransition(() => {
+        router.replace(nextQuery ? `/jobs?${nextQuery}` : "/jobs", {
+          scroll: false,
+        });
+      });
+    },
+    [router, searchParams],
+  );
+
+  useEffect(() => {
+    syncFromQuery({
+      search: searchValue,
+      company: companyValue,
+      location: locationValue,
+    });
+  }, [companyValue, locationValue, searchValue, syncFromQuery]);
+
+  useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
+    if (canUseInteractionFilters) {
+      return;
+    }
+
+    if (!searchParams.get("applied") && !searchParams.get("viewed")) {
+      return;
+    }
+
+    updateQuery({ applied: null, viewed: null });
+  }, [authLoading, canUseInteractionFilters, searchParams, updateQuery]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      const updates: Record<string, string | null> = {};
+
+      if (deferredSearchInput !== searchValue) {
+        updates.search = deferredSearchInput;
+      }
+
+      if (deferredCompanyInput !== companyValue) {
+        updates.company = deferredCompanyInput;
+      }
+
+      if (deferredLocationInput !== locationValue) {
+        updates.location = deferredLocationInput;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        updateQuery(updates);
+      }
+    }, FEED_TEXT_FILTER_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [
+    companyValue,
+    deferredCompanyInput,
+    deferredLocationInput,
+    deferredSearchInput,
+    locationValue,
+    searchValue,
+    updateQuery,
+  ]);
+
+  const {
+    jobs,
+    loading,
+    loadingMore,
+    error,
+    hasMore,
+    total,
+    fetchNextPage,
+    refetch,
+  } = useJobsFeed({
+    limit: 12,
+    search: searchValue || undefined,
+    company: companyValue || undefined,
+    location: locationValue || undefined,
+    sort: sortValue,
+    applied: canUseInteractionFilters ? appliedFilter : undefined,
+    viewed: canUseInteractionFilters ? viewedFilter : undefined,
+    personalized: canUseInteractionFilters,
+    enabled: !authLoading,
+  });
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+
+    if (!target || !hasMore || loading || loadingMore) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+
+        if (!entry?.isIntersecting) {
+          return;
+        }
+
+        void fetchNextPage();
+      },
+      {
+        rootMargin: "240px 0px",
+      },
+    );
+
+    observer.observe(target);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [fetchNextPage, hasMore, loading, loadingMore]);
+
+  const isInitialLoading = authLoading || (loading && jobs.length === 0);
   const hasInteractionFilters =
     appliedFilter !== "all" || viewedFilter !== "all";
+  const hasActiveFilters = Boolean(
+    searchValue.trim() ||
+      companyValue.trim() ||
+      locationValue.trim() ||
+      sortValue !== "newest" ||
+      hasInteractionFilters,
+  );
+  const emptyStateHasFilters = hasActiveFilters;
 
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return jobs.filter((job) => {
-      const matchesSearch =
-        !search.trim() ||
-        job.title.toLowerCase().includes(q) ||
-        job.company.toLowerCase().includes(q) ||
-        job.location.toLowerCase().includes(q);
-
-      if (!matchesSearch) {
-        return false;
+  const clearSingleFilter = useCallback(
+    (key: FilterChipKey) => {
+      switch (key) {
+        case "search":
+          setSearchInput("");
+          updateQuery({ search: null });
+          return;
+        case "company":
+          setCompanyInput("");
+          updateQuery({ company: null });
+          return;
+        case "location":
+          setLocationInput("");
+          updateQuery({ location: null });
+          return;
+        case "sort":
+          updateQuery({ sort: null });
+          return;
+        case "applied":
+          updateQuery({ applied: null });
+          return;
+        case "viewed":
+          updateQuery({ viewed: null });
+          return;
       }
+    },
+    [updateQuery, setSearchInput, setLocationInput, setCompanyInput],
+  );
 
-      if (!canUseInteractionFilters || interactionsLoading) {
-        return true;
-      }
-
-      const applied = isApplied(job.id);
-      const viewed = isViewed(job.id);
-
-      if (appliedFilter === "only" && !applied) {
-        return false;
-      }
-
-      if (appliedFilter === "hide" && applied) {
-        return false;
-      }
-
-      if (viewedFilter === "only" && !viewed) {
-        return false;
-      }
-
-      if (viewedFilter === "hide" && viewed) {
-        return false;
-      }
-
-      return true;
+  const clearAllFilters = useCallback(() => {
+    setSearchInput("");
+    setCompanyInput("");
+    setLocationInput("");
+    updateQuery({
+      search: null,
+      company: null,
+      location: null,
+      sort: null,
+      applied: null,
+      viewed: null,
     });
+  }, [setSearchInput, setCompanyInput, setLocationInput, updateQuery]);
+
+  const handleSortChange = useCallback(
+    (value: JobSortOption) => {
+      updateQuery({ sort: value });
+    },
+    [updateQuery],
+  );
+
+  const handleAppliedFilterChange = useCallback(
+    (value: JobInteractionFilter) => {
+      updateQuery({ applied: value });
+    },
+    [updateQuery],
+  );
+
+  const handleViewedFilterChange = useCallback(
+    (value: JobInteractionFilter) => {
+      updateQuery({ viewed: value });
+    },
+    [updateQuery],
+  );
+
+  const handleRetry = useCallback(() => {
+    void refetch();
+  }, [refetch]);
+
+  const handleRetryMore = useCallback(() => {
+    if (hasMore) {
+      void fetchNextPage();
+      return;
+    }
+
+    void refetch();
+  }, [fetchNextPage, hasMore, refetch]);
+
+  const activeFilterChips = useMemo(() => {
+    const chips: Array<{ key: FilterChipKey; label: string; onClear: () => void }> = [];
+
+    if (searchValue.trim()) {
+      chips.push({
+        key: "search",
+        label: `Arama: ${searchValue.trim()}`,
+        onClear: () => clearSingleFilter("search"),
+      });
+    }
+
+    if (companyValue.trim()) {
+      chips.push({
+        key: "company",
+        label: `Şirket: ${companyValue.trim()}`,
+        onClear: () => clearSingleFilter("company"),
+      });
+    }
+
+    if (locationValue.trim()) {
+      chips.push({
+        key: "location",
+        label: `Konum: ${locationValue.trim()}`,
+        onClear: () => clearSingleFilter("location"),
+      });
+    }
+
+    if (sortValue !== "newest") {
+      chips.push({
+        key: "sort",
+        label: `Sıralama: ${SORT_LABELS[sortValue]}`,
+        onClear: () => clearSingleFilter("sort"),
+      });
+    }
+
+    if (appliedFilter === "only") {
+      chips.push({
+        key: "applied",
+        label: "Başvurduklarım: Sadece göster",
+        onClear: () => clearSingleFilter("applied"),
+      });
+    }
+
+    if (appliedFilter === "hide") {
+      chips.push({
+        key: "applied",
+        label: "Başvurduklarım: Gizle",
+        onClear: () => clearSingleFilter("applied"),
+      });
+    }
+
+    if (viewedFilter === "only") {
+      chips.push({
+        key: "viewed",
+        label: "İncelediklerim: Sadece göster",
+        onClear: () => clearSingleFilter("viewed"),
+      });
+    }
+
+    if (viewedFilter === "hide") {
+      chips.push({
+        key: "viewed",
+        label: "İncelediklerim: Gizle",
+        onClear: () => clearSingleFilter("viewed"),
+      });
+    }
+
+    return chips;
   }, [
-    jobs,
-    search,
-    canUseInteractionFilters,
-    interactionsLoading,
-    isApplied,
-    isViewed,
     appliedFilter,
+    clearSingleFilter,
+    companyValue,
+    locationValue,
+    searchValue,
+    sortValue,
     viewedFilter,
   ]);
 
-  const emptyStateHasFilters = Boolean(search.trim()) || hasInteractionFilters;
+  const resultSummary = useMemo(() => {
+    if (isInitialLoading) {
+      return null;
+    }
+
+    if (total === 0) {
+      return "Sonuç bulunamadı";
+    }
+
+    if (jobs.length >= total) {
+      return `${total} ilan listeleniyor`;
+    }
+
+    return `${jobs.length} / ${total} ilan gösteriliyor`;
+  }, [isInitialLoading, jobs.length, total]);
+  const showBlockingError =
+    Boolean(error) && jobs.length === 0 && !isInitialLoading;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
-      {/* Page header */}
       <div className="mb-10">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              Açık Pozisyonlar
-            </h1>
-            <p className="mt-2 text-sm text-muted">
-              Mevcut iş ilanlarını inceleyin ve size uygun pozisyona başvurun.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 w-full sm:w-auto sm:flex-row sm:items-center">
-            {canPublishJob && (
-              <Button
-                data-umami-event="jobs_go_jobs_new_click"
-                asChild
-                size="3"
-                className="h-11 bg-linear-to-r from-accent to-accent-light font-medium text-white shadow-sm"
-              >
-                <Link
-                  data-umami-event="jobs_go_jobs_new_click_2"
-                  href="/jobs/new"
-                  className="inline-flex items-center gap-2"
-                >
-                  <PlusCircle size={18} /> İlan Yayınla
-                </Link>
-              </Button>
-            )}
-            <div className="w-full sm:w-80">
-              <TextField.Root
-                size="3"
-                variant="surface"
-                className="w-full"
-                placeholder="İlan, şirket veya konum ara..."
-                value={search}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setSearch(e.target.value)
-                }
-              >
-                <TextField.Slot>
-                  <Search
-                    size={18}
-                    className="text-muted-light transition-colors"
-                  />
-                </TextField.Slot>
-                {search && (
-                  <TextField.Slot>
-                    <button
-                      data-umami-event="jobs_search_clear_click"
-                      type="button"
-                      onClick={() => setSearch("")}
-                      className="rounded-full px-1 text-muted-light transition-colors hover:text-foreground"
-                    >
-                      ×
-                    </button>
-                  </TextField.Slot>
-                )}
-              </TextField.Root>
-            </div>
-          </div>
-        </div>
+        <JobsPageHeader
+          canPublishJob={canPublishJob}
+          searchInput={searchInput}
+          onSearchInputChange={setSearchInput}
+          onClearSearch={() => setSearchInput("")}
+        />
 
-        {!isInitialLoading && jobs.length > 0 && (
-          <div className="mt-4 flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-muted px-3 py-1 text-xs font-medium text-accent">
-                <Briefcase size={12} />
-                {filtered.length} açık pozisyon
-              </span>
-            </div>
-
-            {canUseInteractionFilters && (
-              <div className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                  <div>
-                    <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-muted">
-                      <Filter size={14} className="text-accent" />
-                      Kişisel filtreler
-                    </div>
-                    <p className="mt-1 text-xs text-muted">
-                      Başvurduğunuz veya incelediğiniz ilanları ayrı ayrı
-                      gösterin ya da gizleyin.
-                    </p>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2 lg:min-w-104">
-                    <div className="flex flex-col gap-1 text-sm text-foreground">
-                      <span className="text-xs font-medium text-muted">
-                        Başvurduklarım
-                      </span>
-                      <Select.Root
-                        value={appliedFilter}
-                        onValueChange={(value) =>
-                          setAppliedFilter(value as InteractionFilter)
-                        }
-                        disabled={interactionsLoading}
-                      >
-                        <Select.Trigger />
-                        <Select.Content>
-                          <Select.Item value="all">Tümü</Select.Item>
-                          <Select.Item value="only">Sadece göster</Select.Item>
-                          <Select.Item value="hide">Listeden gizle</Select.Item>
-                        </Select.Content>
-                      </Select.Root>
-                    </div>
-
-                    <div className="flex flex-col gap-1 text-sm text-foreground">
-                      <span className="text-xs font-medium text-muted">
-                        İncelediklerim
-                      </span>
-                      <Select.Root
-                        value={viewedFilter}
-                        onValueChange={(value) =>
-                          setViewedFilter(value as InteractionFilter)
-                        }
-                        disabled={interactionsLoading}
-                      >
-                        <Select.Trigger />
-                        <Select.Content>
-                          <Select.Item value="all">Tümü</Select.Item>
-                          <Select.Item value="only">Sadece göster</Select.Item>
-                          <Select.Item value="hide">Listeden gizle</Select.Item>
-                        </Select.Content>
-                      </Select.Root>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+        {!isInitialLoading && (
+          <JobsFiltersPanel
+            resultSummary={resultSummary}
+            hasActiveFilters={hasActiveFilters}
+            onClearAllFilters={clearAllFilters}
+            companyInput={companyInput}
+            locationInput={locationInput}
+            onCompanyInputChange={setCompanyInput}
+            onLocationInputChange={setLocationInput}
+            sortValue={sortValue}
+            onSortChange={handleSortChange}
+            canUseInteractionFilters={canUseInteractionFilters}
+            authLoading={authLoading}
+            appliedFilter={appliedFilter}
+            viewedFilter={viewedFilter}
+            onAppliedChange={handleAppliedFilterChange}
+            onViewedChange={handleViewedFilterChange}
+            activeFilterChips={activeFilterChips}
+          />
         )}
       </div>
 
-      <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50/50 p-4 text-amber-900   ">
-        <div className="flex items-start gap-3">
-          <AlertTriangle size={20} className="mt-0.5 shrink-0 text-amber-600" />
-          <div className="text-sm leading-relaxed">
-            Bu sayfadaki tüm şirketler, pozisyonlar ve ilan detayları tamamen{" "}
-            <strong>kurgusaldır</strong>. Gerçek kurum veya kişilerle ilgisi
-            yoktur.
-          </div>
-        </div>
-      </div>
+      <JobsFictionDisclaimer />
 
-      {error && <ErrorCard message={error} />}
-
-      {isInitialLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
-          {Array.from({ length: 6 }).map((_, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: Skeletons
-            <JobCardSkeleton key={`job-skeleton-${i}`} />
-          ))}
-        </div>
-      ) : filtered.length === 0 ? (
-        <EmptyState
-          icon={<Briefcase size={48} strokeWidth={1} />}
-          title={
-            emptyStateHasFilters
-              ? "Seçtiğiniz filtrelere uygun ilan bulunamadı."
-              : "Şu anda açık pozisyon bulunmuyor."
-          }
-          description={
-            emptyStateHasFilters
-              ? "Aramayı genişletin veya kişisel filtreleri değiştirin."
-              : "Daha sonra tekrar kontrol edin."
-          }
-        />
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {filtered.map((job) => (
-            <JobCard
-              key={job.id}
-              job={job}
-              isApplied={canUseInteractionFilters && isApplied(job.id)}
-              isViewed={canUseInteractionFilters && isViewed(job.id)}
-            />
-          ))}
-        </div>
-      )}
+      <JobsResults
+        jobs={jobs}
+        isInitialLoading={isInitialLoading}
+        showBlockingError={showBlockingError}
+        error={error}
+        emptyStateHasFilters={emptyStateHasFilters}
+        canUseInteractionFilters={canUseInteractionFilters}
+        loadMoreRef={loadMoreRef}
+        loadingMore={loadingMore}
+        hasMore={hasMore}
+        onRetry={handleRetry}
+        onRetryMore={handleRetryMore}
+      />
     </div>
+  );
+}
+
+export default function JobsPage() {
+  return (
+    <Suspense fallback={<JobsPageFallback />}>
+      <JobsPageContent />
+    </Suspense>
   );
 }

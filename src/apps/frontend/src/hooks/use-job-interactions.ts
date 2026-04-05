@@ -1,103 +1,57 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { ViewedJob } from "@/types";
-import { getViewedJobs, trackJobView } from "@/lib/api";
+import { useCallback, useEffect, useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { useAuth } from "@/context/auth-context";
+import { useJobInteractionsStore } from "@/stores/job-interactions-store";
 import { useApplications } from "./use-applications";
-
-function mergeViewedJobs(existing: ViewedJob[], incoming: ViewedJob[]) {
-  const merged = new Map(existing.map((item) => [item.jobId, item]));
-
-  for (const item of incoming) {
-    const current = merged.get(item.jobId);
-
-    if (!current) {
-      merged.set(item.jobId, item);
-      continue;
-    }
-
-    if (
-      new Date(item.lastViewedAt).getTime() >=
-      new Date(current.lastViewedAt).getTime()
-    ) {
-      merged.set(item.jobId, item);
-    }
-  }
-
-  return Array.from(merged.values()).sort(
-    (left, right) =>
-      new Date(right.lastViewedAt).getTime() -
-      new Date(left.lastViewedAt).getTime(),
-  );
-}
 
 export function useViewedJobs() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const [viewedJobs, setViewedJobs] = useState<ViewedJob[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchViewedJobs = useCallback(async () => {
-    if (!isAuthenticated) {
-      setViewedJobs([]);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await getViewedJobs();
-      setViewedJobs((prev) => mergeViewedJobs(prev, data));
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "İncelenen ilanlar yüklenemedi",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [isAuthenticated]);
+  const {
+    viewedJobs,
+    loading,
+    error,
+    hasFetched,
+    fetchViewedJobs,
+    markViewed,
+    reset,
+  } = useJobInteractionsStore(
+    useShallow((state) => ({
+      viewedJobs: state.viewedJobs,
+      loading: state.viewedJobsLoading,
+      error: state.viewedJobsError,
+      hasFetched: state.viewedJobsFetched,
+      fetchViewedJobs: state.fetchViewedJobs,
+      markViewed: state.markViewed,
+      reset: state.reset,
+    })),
+  );
 
   useEffect(() => {
     if (authLoading) {
       return;
     }
 
-    fetchViewedJobs();
-  }, [authLoading, fetchViewedJobs]);
+    if (!isAuthenticated) {
+      reset();
+      return;
+    }
 
-  const markViewed = useCallback(
-    async (jobId: string) => {
-      if (!isAuthenticated) {
-        return;
-      }
+    if (!hasFetched) {
+      void fetchViewedJobs();
+    }
+  }, [authLoading, fetchViewedJobs, hasFetched, isAuthenticated, reset]);
 
-      const optimisticViewedAt = new Date().toISOString();
-
-      setViewedJobs((prev) => {
-        const next = prev.filter((item) => item.jobId !== jobId);
-        return [{ jobId, lastViewedAt: optimisticViewedAt }, ...next];
-      });
-
-      try {
-        await trackJobView(jobId);
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "İlan görüntülenmesi kaydedilemedi",
-        );
-      }
-    },
-    [isAuthenticated],
-  );
+  const refetch = useCallback(async () => {
+    await fetchViewedJobs({ force: true });
+  }, [fetchViewedJobs]);
 
   return {
     viewedJobs,
-    loading: loading || authLoading,
+    loading: authLoading || (isAuthenticated && !hasFetched) || loading,
     error,
-    refetch: fetchViewedJobs,
+    refetch,
     markViewed,
   };
 }

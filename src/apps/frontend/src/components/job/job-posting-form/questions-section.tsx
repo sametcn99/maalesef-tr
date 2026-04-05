@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { TextField, Button, Separator } from "@radix-ui/themes";
 import {
   Plus,
@@ -11,7 +11,9 @@ import {
   List,
   X,
 } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
 import type { JobQuestion } from "@/types";
+import { useJobPostingDraftStore } from "@/stores/job-posting-draft-store";
 import { SectionCard } from "./section-card";
 
 const questionTypes: {
@@ -24,70 +26,57 @@ const questionTypes: {
   { id: "select", label: "Seçenekli", icon: List },
 ];
 
-interface QuestionsSectionProps {
-  questions: JobQuestion[];
-  setQuestions: (questions: JobQuestion[]) => void;
-}
-
-export function QuestionsSection({
-  questions,
-  setQuestions,
-}: QuestionsSectionProps) {
-  // Question form state
-  const [qLabel, setQLabel] = useState("");
-  const [qType, setQType] = useState<JobQuestion["type"]>("text");
-  const [qPlaceholder, setQPlaceholder] = useState("");
-  const [qRequired, setQRequired] = useState(true);
-  const [qOptionInput, setQOptionInput] = useState("");
-  const [qOptions, setQOptions] = useState<string[]>([]);
-
-  const addQOption = useCallback(() => {
-    const val = qOptionInput.trim();
-    if (val && !qOptions.includes(val)) {
-      setQOptions((prev) => [...prev, val]);
-      setQOptionInput("");
-    }
-  }, [qOptionInput, qOptions]);
-
-  const removeQOption = useCallback((index: number) => {
-    setQOptions((prev) => prev.filter((_, i) => i !== index));
-  }, []);
-
-  const addQuestion = useCallback(() => {
-    if (!qLabel.trim()) return;
-    if (qType === "select" && qOptions.length < 2) return;
-
-    const q: JobQuestion = {
-      id: `q${Date.now()}`,
-      label: qLabel.trim(),
-      type: qType,
-      placeholder: qPlaceholder.trim() || undefined,
-      options: qType === "select" ? qOptions : undefined,
-      required: qRequired,
-    };
-
-    setQuestions([...questions, q]);
-    setQLabel("");
-    setQType("text");
-    setQPlaceholder("");
-    setQRequired(true);
-    setQOptions([]);
-    setQOptionInput("");
-  }, [
+export function QuestionsSection() {
+  const {
+    questions,
     qLabel,
     qType,
     qPlaceholder,
     qRequired,
+    qOptionInput,
     qOptions,
-    questions,
-    setQuestions,
-  ]);
+    setQuestionDraftField,
+    addQuestionOption,
+    removeQuestionOption,
+    addQuestion,
+    removeQuestion,
+  } = useJobPostingDraftStore(
+    useShallow((state) => ({
+      questions: state.questions,
+      qLabel: state.qLabel,
+      qType: state.qType,
+      qPlaceholder: state.qPlaceholder,
+      qRequired: state.qRequired,
+      qOptionInput: state.qOptionInput,
+      qOptions: state.qOptions,
+      setQuestionDraftField: state.setQuestionDraftField,
+      addQuestionOption: state.addQuestionOption,
+      removeQuestionOption: state.removeQuestionOption,
+      addQuestion: state.addQuestion,
+      removeQuestion: state.removeQuestion,
+    })),
+  );
 
-  const removeQuestion = useCallback(
+  const addQOption = useCallback(() => {
+    addQuestionOption();
+  }, [addQuestionOption]);
+
+  const removeQOption = useCallback(
     (index: number) => {
-      setQuestions(questions.filter((_, i) => i !== index));
+      removeQuestionOption(index);
     },
-    [questions, setQuestions],
+    [removeQuestionOption],
+  );
+
+  const handleAddQuestion = useCallback(() => {
+    addQuestion();
+  }, [addQuestion]);
+
+  const _handleRemoveQuestion = useCallback(
+    (index: number) => {
+      removeQuestion(index);
+    },
+    [removeQuestion],
   );
 
   return (
@@ -184,7 +173,7 @@ export function QuestionsSection({
               variant="surface"
               placeholder="Örn: Maaş beklentiniz nedir?"
               value={qLabel}
-              onChange={(e) => setQLabel(e.target.value)}
+              onChange={(e) => setQuestionDraftField("qLabel", e.target.value)}
             />
           </div>
 
@@ -198,7 +187,7 @@ export function QuestionsSection({
                   data-umami-event="job_posting_question_select_type_click"
                   key={type.id}
                   type="button"
-                  onClick={() => setQType(type.id)}
+                  onClick={() => setQuestionDraftField("qType", type.id)}
                   className={`flex flex-col items-center justify-center gap-2 rounded-lg border p-3 text-sm transition-all ${
                     qType === type.id
                       ? "border-accent bg-accent-muted/30 text-accent font-medium shadow-sm"
@@ -225,7 +214,9 @@ export function QuestionsSection({
               variant="surface"
               placeholder="İsteğe bağlı ipucu metni"
               value={qPlaceholder}
-              onChange={(e) => setQPlaceholder(e.target.value)}
+              onChange={(e) =>
+                setQuestionDraftField("qPlaceholder", e.target.value)
+              }
             />
           </div>
         </div>
@@ -247,7 +238,9 @@ export function QuestionsSection({
                   variant="surface"
                   placeholder="Bir seçenek ekleyin ve Enter'a basın"
                   value={qOptionInput}
-                  onChange={(e) => setQOptionInput(e.target.value)}
+                  onChange={(e) =>
+                    setQuestionDraftField("qOptionInput", e.target.value)
+                  }
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
@@ -304,14 +297,14 @@ export function QuestionsSection({
         <div className="flex items-center justify-between pt-2">
           <div
             className="flex items-center gap-3 cursor-pointer group outline-none"
-            onClick={() => setQRequired(!qRequired)}
+            onClick={() => setQuestionDraftField("qRequired", !qRequired)}
             role="switch"
             aria-checked={qRequired}
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                setQRequired(!qRequired);
+                setQuestionDraftField("qRequired", !qRequired);
               }
             }}
           >
@@ -337,7 +330,7 @@ export function QuestionsSection({
             data-umami-event="job_posting_question_add_click"
             type="button"
             variant="solid"
-            onClick={addQuestion}
+            onClick={handleAddQuestion}
             disabled={
               !qLabel.trim() || (qType === "select" && qOptions.length < 2)
             }

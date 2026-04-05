@@ -1,51 +1,52 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button, TextField } from "@radix-ui/themes";
 import { ArrowRight, KeyRound, Lock } from "lucide-react";
 import toast from "react-hot-toast";
-import { resetPassword } from "@/lib/api";
+import { useShallow } from "zustand/react/shallow";
+import { useAuthFlowsStore } from "@/stores/auth-flows-store";
 
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token")?.trim() ?? "";
+  const {
+    newPassword,
+    confirmPassword,
+    loading,
+    error,
+    setNewPassword,
+    setConfirmPassword,
+    submitResetPassword,
+    resetResetPassword,
+  } = useAuthFlowsStore(
+    useShallow((state) => ({
+      newPassword: state.resetNewPassword,
+      confirmPassword: state.resetConfirmPassword,
+      loading: state.resetLoading,
+      error: state.resetError,
+      setNewPassword: state.setResetNewPassword,
+      setConfirmPassword: state.setResetConfirmPassword,
+      submitResetPassword: state.submitResetPassword,
+      resetResetPassword: state.resetResetPassword,
+    })),
+  );
 
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    resetResetPassword();
+    return resetResetPassword;
+  }, [resetResetPassword]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!token) {
-      setError("Şifre sıfırlama bağlantısı eksik veya bozuk görünüyor.");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError("Yeni şifre alanları birbiriyle eşleşmiyor.");
-      return;
-    }
-
-    setError(null);
-    setLoading(true);
-
-    try {
-      const result = await resetPassword({ token, newPassword });
+    const result = await submitResetPassword(token);
+    if (result.success && result.message) {
       toast.success(result.message);
       router.push("/login");
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Bir hata oluştu. Lütfen tekrar deneyin.";
-      setError(message);
-    } finally {
-      setLoading(false);
     }
   }
 

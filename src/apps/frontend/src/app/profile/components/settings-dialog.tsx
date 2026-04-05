@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { Dialog, Button, TextField } from "@radix-ui/themes";
 import {
   Settings,
@@ -11,49 +11,69 @@ import {
   Bell,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useShallow } from "zustand/react/shallow";
+import { useAuth } from "@/context/auth-context";
 import type { User } from "@/types";
+import { useProfileUiStore } from "@/stores/profile-ui-store";
 
 interface SettingsDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   user: User | null;
-  updateSettings: (dto: {
-    notificationEmailEnabled?: boolean;
-  }) => Promise<{ success: boolean; error?: string }>;
-  deleteAccount: (
-    password: string,
-  ) => Promise<{ success: boolean; error?: string }>;
-  changePassword: (
-    old: string,
-    newP: string,
-  ) => Promise<{ success: boolean; error?: string }>;
-  onAccountDeleted: () => void;
 }
 
-export function SettingsDialog({
-  open,
-  onOpenChange,
-  user,
-  updateSettings,
-  deleteAccount,
-  changePassword,
-  onAccountDeleted,
-}: SettingsDialogProps) {
+export function SettingsDialog({ user }: SettingsDialogProps) {
   const router = useRouter();
-
-  // Change Password State
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [changeLoading, setChangeLoading] = useState(false);
-  const [changeError, setChangeError] = useState<string | null>(null);
-  const [changeSuccess, setChangeSuccess] = useState<string | null>(null);
-
-  // Delete Account State
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deletePassword, setDeletePassword] = useState("");
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const { updateSettings, deleteAccount, changePassword } = useAuth();
+  const {
+    isSettingsDialogOpen,
+    setSettingsDialogOpen,
+    currentPassword,
+    newPassword,
+    confirmPassword,
+    changeLoading,
+    changeError,
+    changeSuccess,
+    setChangePasswordField,
+    setChangeLoading,
+    setChangeError,
+    setChangeSuccess,
+    resetChangePasswordState,
+    isDeleteDialogOpen,
+    setDeleteDialogOpen,
+    deletePassword,
+    deleteLoading,
+    deleteError,
+    setDeletePassword,
+    setDeleteLoading,
+    setDeleteError,
+    resetDeleteState,
+    setAccountDeleted,
+  } = useProfileUiStore(
+    useShallow((state) => ({
+      isSettingsDialogOpen: state.isSettingsDialogOpen,
+      setSettingsDialogOpen: state.setSettingsDialogOpen,
+      currentPassword: state.currentPassword,
+      newPassword: state.newPassword,
+      confirmPassword: state.confirmPassword,
+      changeLoading: state.changeLoading,
+      changeError: state.changeError,
+      changeSuccess: state.changeSuccess,
+      setChangePasswordField: state.setChangePasswordField,
+      setChangeLoading: state.setChangeLoading,
+      setChangeError: state.setChangeError,
+      setChangeSuccess: state.setChangeSuccess,
+      resetChangePasswordState: state.resetChangePasswordState,
+      isDeleteDialogOpen: state.isDeleteDialogOpen,
+      setDeleteDialogOpen: state.setDeleteDialogOpen,
+      deletePassword: state.deletePassword,
+      deleteLoading: state.deleteLoading,
+      deleteError: state.deleteError,
+      setDeletePassword: state.setDeletePassword,
+      setDeleteLoading: state.setDeleteLoading,
+      setDeleteError: state.setDeleteError,
+      resetDeleteState: state.resetDeleteState,
+      setAccountDeleted: state.setAccountDeleted,
+    })),
+  );
 
   async function handleChangePassword(e: FormEvent) {
     e.preventDefault();
@@ -71,10 +91,8 @@ export function SettingsDialog({
     if (!result.success) {
       setChangeError(result.error ?? "Şifre değiştirilemedi.");
     } else {
+      resetChangePasswordState();
       setChangeSuccess("Şifreniz başarıyla güncellendi.");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
     }
 
     setChangeLoading(false);
@@ -97,14 +115,24 @@ export function SettingsDialog({
     }
 
     setDeleteLoading(false);
-    setDeleteDialogOpen(false);
-    onOpenChange(false);
-    onAccountDeleted();
+    resetDeleteState();
+    setSettingsDialogOpen(false);
+    setAccountDeleted(true);
     router.replace("/");
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root
+      open={isSettingsDialogOpen}
+      onOpenChange={(open) => {
+        setSettingsDialogOpen(open);
+
+        if (!open) {
+          resetChangePasswordState();
+          resetDeleteState();
+        }
+      }}
+    >
       <Dialog.Trigger>
         <Button
           data-umami-event="profile_settings_open_dialog_click"
@@ -156,7 +184,7 @@ export function SettingsDialog({
                   type="password"
                   value={currentPassword}
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setCurrentPassword(e.target.value)
+                    setChangePasswordField("currentPassword", e.target.value)
                   }
                   required
                   className="mt-2 w-full"
@@ -176,7 +204,7 @@ export function SettingsDialog({
                   value={newPassword}
                   minLength={6}
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setNewPassword(e.target.value)
+                    setChangePasswordField("newPassword", e.target.value)
                   }
                   required
                   className="mt-2 w-full"
@@ -195,7 +223,7 @@ export function SettingsDialog({
                   type="password"
                   value={confirmPassword}
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setConfirmPassword(e.target.value)
+                    setChangePasswordField("confirmPassword", e.target.value)
                   }
                   required
                   className="mt-2 w-full"
@@ -279,7 +307,7 @@ export function SettingsDialog({
             </div>
 
             <Dialog.Root
-              open={deleteDialogOpen}
+              open={isDeleteDialogOpen}
               onOpenChange={setDeleteDialogOpen}
             >
               <Dialog.Trigger>

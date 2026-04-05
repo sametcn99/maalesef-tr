@@ -21,6 +21,12 @@ export interface JobQuestion {
 
 @Entity('jobs')
 export class Job extends AppBaseEntity {
+  applicantCount?: number;
+
+  isApplied?: boolean;
+
+  isViewed?: boolean;
+
   @Column({ length: 255 })
   title!: string;
 

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, Suspense, useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Tabs, Badge } from "@radix-ui/themes";
 import { FileText, Bell, Briefcase } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
 
 import {
   useApplications,
@@ -13,7 +14,8 @@ import {
 } from "@/hooks";
 import { useAuth } from "@/context/auth-context";
 import { FeedbackModal } from "@/components/application";
-import type { Application } from "@/types";
+import { useProfileSettingsStore } from "@/stores/profile-settings-store";
+import { useProfileUiStore } from "@/stores/profile-ui-store";
 
 import { ProfileHeader } from "./components/profile-header";
 import { SettingsDialog } from "./components/settings-dialog";
@@ -27,14 +29,27 @@ import { BadgesDisplay } from "./components/badges-display";
 function ProfileContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const resetProfileSettings = useProfileSettingsStore((state) => state.reset);
   const {
-    isAuthenticated,
-    isLoading: authLoading,
-    user,
-    deleteAccount,
-    changePassword,
-    updateSettings,
-  } = useAuth();
+    selectedApplication,
+    isFeedbackModalOpen,
+    accountDeleted,
+    openFeedbackModal,
+    closeFeedbackModal,
+    setAccountDeleted,
+    resetAll,
+  } = useProfileUiStore(
+    useShallow((state) => ({
+      selectedApplication: state.selectedApplication,
+      isFeedbackModalOpen: state.isFeedbackModalOpen,
+      accountDeleted: state.accountDeleted,
+      openFeedbackModal: state.openFeedbackModal,
+      closeFeedbackModal: state.closeFeedbackModal,
+      setAccountDeleted: state.setAccountDeleted,
+      resetAll: state.resetAll,
+    })),
+  );
 
   const defaultTab =
     searchParams.get("tab") === "notifications"
@@ -65,10 +80,14 @@ function ProfileContent() {
 
   const { badges, loading: badgesLoading, error: badgesError } = useBadges();
 
-  const [selectedApp, setSelectedApp] = useState<Application | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [accountDeleted, setAccountDeleted] = useState(false);
+  useEffect(() => {
+    setAccountDeleted(false);
+
+    return () => {
+      resetAll();
+      resetProfileSettings();
+    };
+  }, [resetAll, resetProfileSettings, setAccountDeleted]);
 
   // Redirect to login if not authenticated (wait for auth to finish loading)
   useEffect(() => {
@@ -76,11 +95,6 @@ function ProfileContent() {
       router.replace("/login?redirect=/profile");
     }
   }, [isAuthenticated, authLoading, router, accountDeleted]);
-
-  function handleRowClick(application: Application) {
-    setSelectedApp(application);
-    setModalOpen(true);
-  }
 
   if (authLoading || !isAuthenticated) {
     return null;
@@ -92,15 +106,7 @@ function ProfileContent() {
       <div className="animate-fade-in mb-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <ProfileHeader user={user} />
-          <SettingsDialog
-            open={settingsOpen}
-            onOpenChange={setSettingsOpen}
-            user={user}
-            updateSettings={updateSettings}
-            deleteAccount={deleteAccount}
-            changePassword={changePassword}
-            onAccountDeleted={() => setAccountDeleted(true)}
-          />
+          <SettingsDialog user={user} />
         </div>
 
         {/* Profile Sharing - Moved out of SettingsDialog */}
@@ -177,7 +183,7 @@ function ProfileContent() {
               applications={applications}
               loading={appsLoading}
               error={appsError}
-              onRowClick={handleRowClick}
+              onRowClick={openFeedbackModal}
             />
           </Tabs.Content>
 
@@ -204,9 +210,9 @@ function ProfileContent() {
       </div>
 
       <FeedbackModal
-        application={selectedApp}
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
+        application={selectedApplication}
+        isOpen={isFeedbackModalOpen}
+        onClose={closeFeedbackModal}
       />
     </div>
   );

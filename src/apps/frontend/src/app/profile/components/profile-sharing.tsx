@@ -18,54 +18,32 @@ import {
   ChevronUp,
   UserCircle,
 } from "lucide-react";
-import { useEffect, useState } from "react";
 import type { VisibilitySettings } from "@/lib/api";
 
 export function ProfileSharing() {
   const {
     settings,
     loading: settingsLoading,
+    error,
+    localVisibility,
+    localBio,
+    saving,
+    isCollapsed,
+    hasChanges,
     toggleSharing,
-    updateProfile,
+    setLocalBio,
+    setLocalVisibilityField,
+    saveProfile,
+    setIsCollapsed,
   } = useProfileSettings(true);
 
-  const [localVisibility, setLocalVisibility] =
-    useState<VisibilitySettings | null>(null);
-  const [localBio, setLocalBio] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
-  useEffect(() => {
-    if (settings) {
-      if (settings.visibilitySettings) {
-        setLocalVisibility(settings.visibilitySettings);
-      }
-      setLocalBio(settings.bio || "");
-    }
-  }, [settings]);
-
-  const hasChanges =
-    (localVisibility &&
-      settings &&
-      JSON.stringify(localVisibility) !==
-        JSON.stringify(settings.visibilitySettings)) ||
-    (settings && localBio !== (settings.bio || ""));
-
   const handleCheckChange = (key: keyof VisibilitySettings, value: boolean) => {
-    setLocalVisibility((prev) => (prev ? { ...prev, [key]: value } : null));
+    setLocalVisibilityField(key, value);
   };
 
   const handleSave = async () => {
     if (!localVisibility) return;
-    setSaving(true);
-    try {
-      await updateProfile({
-        bio: localBio,
-        visibilitySettings: localVisibility,
-      });
-    } finally {
-      setSaving(false);
-    }
+    await saveProfile();
   };
 
   const toggleCollapse = () => {
@@ -117,7 +95,7 @@ export function ProfileSharing() {
           <Switch
             checked={!!settings?.slug}
             onCheckedChange={(val) => {
-              toggleSharing(val);
+              void toggleSharing(Boolean(val));
               if (val) setIsCollapsed(false);
             }}
             disabled={settingsLoading || !settings}
@@ -128,6 +106,12 @@ export function ProfileSharing() {
 
       {settings?.slug && localVisibility && !isCollapsed && (
         <div className="animate-fade-in mt-4 space-y-5 border-t border-border pt-4">
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
           <div className="flex items-center gap-2 rounded-lg border border-border bg-surface-hover p-2">
             <code className="text-muted flex-1 break-all text-xs">
               {typeof window !== "undefined"

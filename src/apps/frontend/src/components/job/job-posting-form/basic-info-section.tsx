@@ -2,33 +2,29 @@
 
 import { TextField, TextArea } from "@radix-ui/themes";
 import { Briefcase, Building2, MapPin, FileText } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
+import { useJobPostingDraftStore } from "@/stores/job-posting-draft-store";
 import { SectionCard } from "./section-card";
 
-interface BasicInfoSectionProps {
-  title: string;
-  setTitle: (value: string) => void;
-  company: string;
-  setCompany: (value: string) => void;
-  location: string;
-  setLocation: (value: string) => void;
-  shortDescription: string;
-  setShortDescription: (value: string) => void;
-  fullDescription: string;
-  setFullDescription: (value: string) => void;
-}
+export function BasicInfoSection() {
+  const {
+    title,
+    company,
+    location,
+    shortDescription,
+    fullDescription,
+    setBasicField,
+  } = useJobPostingDraftStore(
+    useShallow((state) => ({
+      title: state.title,
+      company: state.company,
+      location: state.location,
+      shortDescription: state.shortDescription,
+      fullDescription: state.fullDescription,
+      setBasicField: state.setBasicField,
+    })),
+  );
 
-export function BasicInfoSection({
-  title,
-  setTitle,
-  company,
-  setCompany,
-  location,
-  setLocation,
-  shortDescription,
-  setShortDescription,
-  fullDescription,
-  setFullDescription,
-}: BasicInfoSectionProps) {
   return (
     <SectionCard
       icon={Briefcase}
@@ -51,7 +47,7 @@ export function BasicInfoSection({
           placeholder="Örn: Frontend Developer"
           value={title}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setTitle(e.target.value)
+            setBasicField("title", e.target.value)
           }
           required
         >
@@ -77,7 +73,7 @@ export function BasicInfoSection({
             placeholder="Örn: TeknoSoft A.Ş."
             value={company}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setCompany(e.target.value)
+              setBasicField("company", e.target.value)
             }
             required
           >
@@ -101,7 +97,7 @@ export function BasicInfoSection({
             placeholder="Örn: İstanbul, Türkiye (Uzaktan)"
             value={location}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setLocation(e.target.value)
+              setBasicField("location", e.target.value)
             }
             required
           >
@@ -123,7 +119,7 @@ export function BasicInfoSection({
           id="job-short-desc"
           placeholder="İlan listesinde görünecek kısa tanım (1-2 cümle)"
           value={shortDescription}
-          onChange={(e) => setShortDescription(e.target.value)}
+          onChange={(e) => setBasicField("shortDescription", e.target.value)}
           required
           rows={4}
           className="min-h-[100px] bg-surface-hover/30 text-base shadow-sm"
@@ -145,7 +141,7 @@ export function BasicInfoSection({
             id="job-full-desc"
             placeholder="Görev tanımı, sunduğunuz imkanlar, çalışma ortamı vb. detayları yazın..."
             value={fullDescription}
-            onChange={(e) => setFullDescription(e.target.value)}
+            onChange={(e) => setBasicField("fullDescription", e.target.value)}
             required
             rows={10}
             className="min-h-[300px] w-full bg-surface-hover/30 text-base shadow-sm"

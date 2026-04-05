@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { Button } from "@radix-ui/themes";
 import { ListChecks, Send, Loader2 } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
 
-import type { CreateJobPayload, JobQuestion } from "@/types";
+import { useJobPostingDraftStore } from "@/stores/job-posting-draft-store";
 import { BasicInfoSection } from "./basic-info-section";
 import { RequirementsSection } from "./requirements-section";
 import { QuestionsSection } from "./questions-section";
 
 interface JobPostingFormProps {
-  onSubmit: (input: CreateJobPayload) => void | Promise<void>;
+  onSubmit: () => void | Promise<void>;
   isSubmitting?: boolean;
 }
 
@@ -18,13 +19,23 @@ export function JobPostingForm({
   onSubmit,
   isSubmitting,
 }: JobPostingFormProps) {
-  const [title, setTitle] = useState("");
-  const [company, setCompany] = useState("");
-  const [location, setLocation] = useState("");
-  const [shortDescription, setShortDescription] = useState("");
-  const [fullDescription, setFullDescription] = useState("");
-  const [requirements, setRequirements] = useState<string[]>([]);
-  const [questions, setQuestions] = useState<JobQuestion[]>([]);
+  const {
+    title,
+    company,
+    location,
+    shortDescription,
+    fullDescription,
+    requirements,
+  } = useJobPostingDraftStore(
+    useShallow((state) => ({
+      title: state.title,
+      company: state.company,
+      location: state.location,
+      shortDescription: state.shortDescription,
+      fullDescription: state.fullDescription,
+      requirements: state.requirements,
+    })),
+  );
 
   const canSubmit = useMemo(
     () =>
@@ -50,15 +61,7 @@ export function JobPostingForm({
     e.preventDefault();
     if (!canSubmit) return;
 
-    onSubmit({
-      title: title.trim(),
-      company: company.trim(),
-      location: location.trim(),
-      shortDescription: shortDescription.trim(),
-      fullDescription: fullDescription.trim(),
-      requirements,
-      questions,
-    });
+    onSubmit();
   }
 
   return (
@@ -75,25 +78,11 @@ export function JobPostingForm({
         </p>
       </div>
 
-      <BasicInfoSection
-        title={title}
-        setTitle={setTitle}
-        company={company}
-        setCompany={setCompany}
-        location={location}
-        setLocation={setLocation}
-        shortDescription={shortDescription}
-        setShortDescription={setShortDescription}
-        fullDescription={fullDescription}
-        setFullDescription={setFullDescription}
-      />
+      <BasicInfoSection />
 
-      <RequirementsSection
-        requirements={requirements}
-        setRequirements={setRequirements}
-      />
+      <RequirementsSection />
 
-      <QuestionsSection questions={questions} setQuestions={setQuestions} />
+      <QuestionsSection />
 
       <div className="flex items-center justify-end gap-3 pt-4">
         <Button

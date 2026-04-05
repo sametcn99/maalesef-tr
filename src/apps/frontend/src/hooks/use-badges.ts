@@ -1,29 +1,18 @@
-import { useState, useEffect } from "react";
-import { getBadges } from "@/lib/api";
-import type { Badge } from "@/types";
+import { useEffect } from "react";
+import { useBadgesStore } from "@/stores/badges-store";
 
 export function useBadges() {
-  const [badges, setBadges] = useState<Badge[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const badges = useBadgesStore((state) => state.badges);
+  const loading = useBadgesStore((state) => state.loading);
+  const error = useBadgesStore((state) => state.error);
+  const hasFetched = useBadgesStore((state) => state.hasFetched);
+  const fetchBadges = useBadgesStore((state) => state.fetchBadges);
 
   useEffect(() => {
-    async function fetchBadges() {
-      try {
-        setLoading(true);
-        const data = await getBadges();
-        setBadges(data);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to fetch badges");
-        setBadges([]);
-      } finally {
-        setLoading(false);
-      }
+    if (!hasFetched) {
+      void fetchBadges();
     }
-
-    fetchBadges();
-  }, []);
+  }, [fetchBadges, hasFetched]);
 
   return { badges, loading, error };
 }

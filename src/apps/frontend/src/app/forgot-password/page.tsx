@@ -1,35 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { Button, TextField } from "@radix-ui/themes";
 import { ArrowRight, KeyRound, Mail } from "lucide-react";
 import toast from "react-hot-toast";
-import { forgotPassword } from "@/lib/api";
+import { useShallow } from "zustand/react/shallow";
+import { useAuthFlowsStore } from "@/stores/auth-flows-store";
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const {
+    email,
+    loading,
+    error,
+    successMessage,
+    setEmail,
+    submitForgotPassword,
+    resetForgotPassword,
+  } = useAuthFlowsStore(
+    useShallow((state) => ({
+      email: state.forgotEmail,
+      loading: state.forgotLoading,
+      error: state.forgotError,
+      successMessage: state.forgotSuccessMessage,
+      setEmail: state.setForgotEmail,
+      submitForgotPassword: state.submitForgotPassword,
+      resetForgotPassword: state.resetForgotPassword,
+    })),
+  );
+
+  useEffect(() => {
+    resetForgotPassword();
+    return resetForgotPassword;
+  }, [resetForgotPassword]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    try {
-      const result = await forgotPassword(email);
-      setSuccessMessage(result.message);
+    const result = await submitForgotPassword();
+    if (result.success) {
       toast.success("Şifre sıfırlama bağlantısı gönderildi.");
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Bir hata oluştu. Lütfen tekrar deneyin.";
-      setError(message);
-    } finally {
-      setLoading(false);
     }
   }
 

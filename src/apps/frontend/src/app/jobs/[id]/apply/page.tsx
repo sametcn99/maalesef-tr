@@ -1,7 +1,8 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useShallow } from "zustand/react/shallow";
 import {
   Button,
   TextField,
@@ -24,6 +25,7 @@ import { useJob, useSubmitApplication, useViewedJobs } from "@/hooks";
 import { useAuth } from "@/context/auth-context";
 import { CvUpload } from "@/components/application";
 import { ErrorCard, DetailSkeleton } from "@/components/ui";
+import { useApplicationDraftStore } from "@/stores/application-draft-store";
 
 export default function ApplyPage({
   params,
@@ -36,18 +38,51 @@ export default function ApplyPage({
   const { job, loading, error } = useJob(id);
   const { submit, submitting } = useSubmitApplication();
   const { markViewed } = useViewedJobs();
+  const {
+    answers,
+    cvFile,
+    cvError,
+    aiConsent,
+    isInfoModalOpen,
+    initializeDraft,
+    setAnswer,
+    setCvFile,
+    setCvError,
+    setAiConsent,
+    setInfoModalOpen,
+    reset,
+  } = useApplicationDraftStore(
+    useShallow((state) => ({
+      answers: state.answers,
+      cvFile: state.cvFile,
+      cvError: state.cvError,
+      aiConsent: state.aiConsent,
+      isInfoModalOpen: state.isInfoModalOpen,
+      initializeDraft: state.initializeDraft,
+      setAnswer: state.setAnswer,
+      setCvFile: state.setCvFile,
+      setCvError: state.setCvError,
+      setAiConsent: state.setAiConsent,
+      setInfoModalOpen: state.setInfoModalOpen,
+      reset: state.reset,
+    })),
+  );
 
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [cvFile, setCvFile] = useState<File | null>(null);
-  const [aiConsent, setAiConsent] = useState(false);
-  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+  useEffect(() => {
+    initializeDraft(id);
+
+    return () => {
+      reset();
+    };
+  }, [id, initializeDraft, reset]);
 
   // Redirect to login if not authenticated (wait for auth to finish loading)
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
+      reset();
       router.replace(`/login?redirect=/jobs/${id}/apply`);
     }
-  }, [isAuthenticated, authLoading, router, id]);
+  }, [isAuthenticated, authLoading, reset, router, id]);
 
   useEffect(() => {
     if (!job || !isAuthenticated) {
@@ -58,11 +93,11 @@ export default function ApplyPage({
   }, [job, isAuthenticated, markViewed]);
 
   function updateAnswer(questionId: string, value: string) {
-    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+    setAnswer(questionId, value);
   }
 
   function isFormValid(): boolean {
-    if (!job || !aiConsent || !cvFile) return false;
+    if (!job || !aiConsent || !cvFile || cvError) return false;
     for (const q of job.questions) {
       if (q.required && !answers[q.id]?.trim()) return false;
     }
@@ -79,6 +114,7 @@ export default function ApplyPage({
 
     const result = await submit(job.id, job.title, answers, cvFile, aiConsent);
     if (result) {
+      reset();
       toast.success(
         "Başvurunuz alınmıştır. Sonuçlar profilinize ve e-posta adresinize gönderilecektir.",
         { icon: "📨" },
@@ -247,7 +283,13 @@ export default function ApplyPage({
             </h2>
           </div>
 
-          <CvUpload onFileSelect={setCvFile} disabled={submitting} />
+          <CvUpload
+            file={cvFile}
+            error={cvError}
+            onFileSelect={setCvFile}
+            onErrorChange={setCvError}
+            disabled={submitting}
+          />
         </div>
 
         <Separator className="bg-border" size="4" />
@@ -257,7 +299,7 @@ export default function ApplyPage({
           <div className="rounded-xl border border-border bg-surface p-5">
             <Checkbox
               checked={aiConsent}
-              onCheckedChange={(checked) => setAiConsent(!!checked)}
+              onCheckedChange={(checked) => setAiConsent(Boolean(checked))}
               required
               className="items-start"
             />
@@ -272,7 +314,7 @@ export default function ApplyPage({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  setIsInfoModalOpen(true);
+                  setInfoModalOpen(true);
                 }}
                 className="w-fit cursor-pointer text-xs text-accent hover:underline bg-transparent border-none p-0"
               >
@@ -310,7 +352,7 @@ export default function ApplyPage({
         </div>
       </div>
 
-      <Dialog.Root open={isInfoModalOpen} onOpenChange={setIsInfoModalOpen}>
+      <Dialog.Root open={isInfoModalOpen} onOpenChange={setInfoModalOpen}>
         <Dialog.Content className="max-w-lg">
           <Dialog.Title>Veri İşleme Bilgilendirmesi</Dialog.Title>
           <Dialog.Description className="text-sm text-foreground/80">
@@ -322,7 +364,7 @@ export default function ApplyPage({
           </Dialog.Description>
           <Button
             data-umami-event="jobs_job_apply_anladim_click"
-            onClick={() => setIsInfoModalOpen(false)}
+            onClick={() => setInfoModalOpen(false)}
             size="3"
             className="mt-4 bg-accent text-white hover:brightness-110"
           >

@@ -1,29 +1,47 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { Badge, Button } from "@radix-ui/themes";
 import { User as UserIcon } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
 import { resendVerificationEmail } from "@/lib/api";
 import type { User as UserType } from "@/types";
+import { useProfileUiStore } from "@/stores/profile-ui-store";
 
 interface ProfileHeaderProps {
   user: UserType | null;
 }
 
 export function ProfileHeader({ user }: ProfileHeaderProps) {
-  const [resendMessage, setResendMessage] = useState<string | null>(null);
-  const [resendError, setResendError] = useState<string | null>(null);
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const [resendLoading, setResendLoading] = useState(false);
+  const {
+    resendMessage,
+    resendError,
+    resendCooldown,
+    resendLoading,
+    setResendMessage,
+    setResendError,
+    setResendCooldown,
+    tickResendCooldown,
+    setResendLoading,
+  } = useProfileUiStore(
+    useShallow((state) => ({
+      resendMessage: state.resendMessage,
+      resendError: state.resendError,
+      resendCooldown: state.resendCooldown,
+      resendLoading: state.resendLoading,
+      setResendMessage: state.setResendMessage,
+      setResendError: state.setResendError,
+      setResendCooldown: state.setResendCooldown,
+      tickResendCooldown: state.tickResendCooldown,
+      setResendLoading: state.setResendLoading,
+    })),
+  );
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
-    const timer = setInterval(
-      () => setResendCooldown((prev) => Math.max(prev - 1, 0)),
-      1000,
-    );
+    const timer = window.setInterval(() => tickResendCooldown(), 1000);
     return () => clearInterval(timer);
-  }, [resendCooldown]);
+  }, [resendCooldown, tickResendCooldown]);
 
   const emailBadge = useMemo(() => {
     if (!user) return null;
@@ -103,7 +121,17 @@ export function ProfileHeader({ user }: ProfileHeaderProps) {
         </div>
       </div>
     );
-  }, [user, resendCooldown, resendError, resendLoading, resendMessage]);
+  }, [
+    user,
+    resendCooldown,
+    resendError,
+    resendLoading,
+    resendMessage,
+    setResendMessage,
+    setResendLoading,
+    setResendError,
+    setResendCooldown,
+  ]);
 
   return (
     <div className="flex items-start gap-4">

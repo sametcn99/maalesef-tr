@@ -1,146 +1,318 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import type { Job } from "@/types";
-import { getJobs, getJob, getMyJobs, deleteJob } from "@/lib/api";
+import { useCallback, useEffect, useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
+import type { JobInteractionFilter, JobSortOption } from "@/types";
+import { useAuth } from "@/context/auth-context";
 import { useJobPosting } from "@/context/job-posting-context";
+import {
+  buildJobsListKey,
+  DEFAULT_JOB_DETAIL_STATE,
+  DEFAULT_JOBS_LIST_STATE,
+  useJobsStore,
+} from "@/stores/jobs-store";
 
-export function useJobs() {
-  const [apiJobs, setApiJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { userJobs } = useJobPosting();
-  const hasLoadedOnce = useRef(false);
+interface UseJobsOptions {
+  limit?: number;
+}
 
-  const fetchJobs = useCallback(async () => {
-    const shouldShowLoading = !hasLoadedOnce.current;
+interface UseJobsFeedOptions {
+  limit?: number;
+  search?: string;
+  company?: string;
+  location?: string;
+  sort?: JobSortOption;
+  applied?: JobInteractionFilter;
+  viewed?: JobInteractionFilter;
+  personalized?: boolean;
+  enabled?: boolean;
+}
 
-    try {
-      if (shouldShowLoading) {
-        setLoading(true);
-      }
-      setError(null);
-      const data = await getJobs();
-      setApiJobs(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "İlanlar yüklenemedi");
-    } finally {
-      hasLoadedOnce.current = true;
-      if (shouldShowLoading) {
-        setLoading(false);
-      }
-    }
-  }, []);
+export function useJobs(options: UseJobsOptions = {}) {
+  const { limit = 12 } = options;
+  const key = useMemo(
+    () => buildJobsListKey({ limit, sort: "newest" }),
+    [limit],
+  );
+  const { list, fetchJobsList, abortJobsList } = useJobsStore(
+    useShallow((state) => ({
+      list: state.lists[key] ?? DEFAULT_JOBS_LIST_STATE,
+      fetchJobsList: state.fetchJobsList,
+      abortJobsList: state.abortJobsList,
+    })),
+  );
 
   useEffect(() => {
-    fetchJobs();
-  }, [fetchJobs]);
-
-  const jobs = useMemo(() => {
-    const merged = new Map<string, Job>();
-    apiJobs.forEach((job) => {
-      merged.set(job.id, job);
-    });
-    userJobs.forEach((job) => {
-      merged.set(job.id, job);
-    });
-
-    return Array.from(merged.values()).sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    void fetchJobsList(
+      key,
+      { page: 1, limit, sort: "newest" },
+      { mode: "replace" },
     );
-  }, [userJobs, apiJobs]);
 
-  return { jobs, loading, error, refetch: fetchJobs };
+    return () => {
+      abortJobsList(key);
+    };
+  }, [abortJobsList, fetchJobsList, key, limit]);
+
+  const refetch = useCallback(async () => {
+    await fetchJobsList(
+      key,
+      { page: 1, limit, sort: "newest" },
+      { mode: "replace" },
+    );
+  }, [fetchJobsList, key, limit]);
+
+  return {
+    jobs: list.jobs,
+    loading: list.loading,
+    error: list.error,
+    refetch,
+  };
 }
 
-export function useMyJobs() {
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchMyJobs = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await getMyJobs();
-      setJobs(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "İlanlar yüklenemedi");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchMyJobs();
-  }, [fetchMyJobs]);
-
-  const removeJob = useCallback(async (id: string) => {
-    await deleteJob(id);
-    setJobs((prev) => prev.filter((j) => j.id !== id));
-  }, []);
-
-  return { jobs, loading, error, refetch: fetchMyJobs, removeJob };
-}
-
-export function useJob(id: string) {
-  const [job, setJob] = useState<Job | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { userJobs } = useJobPosting();
-  const hasLoadedOnce = useRef(false);
-  const lastJobId = useRef<string | null>(null);
+export function useJobsFeed(options: UseJobsFeedOptions = {}) {
+  const {
+    limit = 12,
+    search,
+    company,
+    location,
+    sort = "newest",
+    applied = "all",
+    viewed = "all",
+    personalized = false,
+    enabled = true,
+  } = options;
+  const key = useMemo(
+    () =>
+      buildJobsListKey({
+        limit,
+        search,
+        company,
+        location,
+        sort,
+        applied: personalized ? applied : undefined,
+        viewed: personalized ? viewed : undefined,
+        personalized,
+      }),
+    [applied, company, limit, location, personalized, search, sort, viewed],
+  );
+  const { list, fetchJobsList, abortJobsList, resetJobsList } = useJobsStore(
+    useShallow((state) => ({
+      list: state.lists[key] ?? DEFAULT_JOBS_LIST_STATE,
+      fetchJobsList: state.fetchJobsList,
+      abortJobsList: state.abortJobsList,
+      resetJobsList: state.resetJobsList,
+    })),
+  );
 
   useEffect(() => {
-    let cancelled = false;
-
-    if (lastJobId.current !== id) {
-      lastJobId.current = id;
-      hasLoadedOnce.current = false;
-      setLoading(true);
-      setError(null);
-      setJob(null);
-    }
-
-    // First check user-created jobs (id parameter could be uuid or slug)
-    const userJob = userJobs.find((j) => j.id === id || j.slug === id);
-    if (userJob) {
-      setJob(userJob);
-      setLoading(false);
-      hasLoadedOnce.current = true;
+    if (!enabled) {
+      resetJobsList(key);
       return;
     }
 
-    async function fetchJob() {
-      const shouldShowLoading = !hasLoadedOnce.current;
+    void fetchJobsList(
+      key,
+      {
+        page: 1,
+        limit,
+        search,
+        company,
+        location,
+        sort,
+        applied: personalized ? applied : undefined,
+        viewed: personalized ? viewed : undefined,
+      },
+      {
+        mode: "replace",
+        personalized,
+      },
+    );
 
-      try {
-        if (shouldShowLoading) {
-          setLoading(true);
-        }
-        setError(null);
-        const data = await getJob(id);
-        if (!cancelled) setJob(data);
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "İlan yüklenemedi");
-        }
-      } finally {
-        if (!cancelled) {
-          hasLoadedOnce.current = true;
-          if (shouldShowLoading) {
-            setLoading(false);
-          }
-        }
-      }
+    return () => {
+      abortJobsList(key);
+    };
+  }, [
+    abortJobsList,
+    applied,
+    company,
+    enabled,
+    fetchJobsList,
+    key,
+    limit,
+    location,
+    personalized,
+    resetJobsList,
+    search,
+    sort,
+    viewed,
+  ]);
+
+  const fetchNextPage = useCallback(async () => {
+    if (!enabled || list.loading || list.loadingMore || !list.hasMore) {
+      return;
     }
 
-    fetchJob();
-    return () => {
-      cancelled = true;
-    };
-  }, [id, userJobs]);
+    await fetchJobsList(
+      key,
+      {
+        page: list.page + 1,
+        limit,
+        search,
+        company,
+        location,
+        sort,
+        applied: personalized ? applied : undefined,
+        viewed: personalized ? viewed : undefined,
+      },
+      {
+        mode: "append",
+        personalized,
+      },
+    );
+  }, [
+    applied,
+    company,
+    enabled,
+    fetchJobsList,
+    key,
+    limit,
+    list.hasMore,
+    list.loading,
+    list.loadingMore,
+    list.page,
+    location,
+    personalized,
+    search,
+    sort,
+    viewed,
+  ]);
 
-  return { job, loading, error };
+  const refetch = useCallback(async () => {
+    await fetchJobsList(
+      key,
+      {
+        page: 1,
+        limit,
+        search,
+        company,
+        location,
+        sort,
+        applied: personalized ? applied : undefined,
+        viewed: personalized ? viewed : undefined,
+      },
+      {
+        mode: "replace",
+        personalized,
+      },
+    );
+  }, [
+    applied,
+    company,
+    fetchJobsList,
+    key,
+    limit,
+    location,
+    personalized,
+    search,
+    sort,
+    viewed,
+  ]);
+
+  if (!enabled) {
+    return {
+      jobs: DEFAULT_JOBS_LIST_STATE.jobs,
+      page: DEFAULT_JOBS_LIST_STATE.page,
+      total: DEFAULT_JOBS_LIST_STATE.total,
+      hasMore: DEFAULT_JOBS_LIST_STATE.hasMore,
+      loading: DEFAULT_JOBS_LIST_STATE.loading,
+      loadingMore: DEFAULT_JOBS_LIST_STATE.loadingMore,
+      error: DEFAULT_JOBS_LIST_STATE.error,
+      fetchNextPage,
+      refetch,
+    };
+  }
+
+  return {
+    jobs: list.jobs,
+    page: list.page,
+    total: list.total,
+    hasMore: list.hasMore,
+    loading: list.loading,
+    loadingMore: list.loadingMore,
+    error: list.error,
+    fetchNextPage,
+    refetch,
+  };
+}
+
+export function useMyJobs() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { jobs, loading, error, hasFetched, fetchMyJobs, removeMyJob, reset } =
+    useJobsStore(
+      useShallow((state) => ({
+        jobs: state.myJobs,
+        loading: state.myJobsLoading,
+        error: state.myJobsError,
+        hasFetched: state.myJobsFetched,
+        fetchMyJobs: state.fetchMyJobs,
+        removeMyJob: state.removeMyJob,
+        reset: state.resetMyJobs,
+      })),
+    );
+
+  useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      reset();
+      return;
+    }
+
+    void fetchMyJobs();
+  }, [authLoading, fetchMyJobs, isAuthenticated, reset]);
+
+  const refetch = useCallback(async () => {
+    await fetchMyJobs();
+  }, [fetchMyJobs]);
+
+  return {
+    jobs,
+    loading: authLoading || (isAuthenticated && !hasFetched) || loading,
+    error,
+    refetch,
+    removeJob: removeMyJob,
+  };
+}
+
+export function useJob(id: string) {
+  const { userJobs } = useJobPosting();
+  const { jobDetail, fetchJobDetail, setJobDetail } = useJobsStore(
+    useShallow((state) => ({
+      jobDetail: state.jobDetails[id] ?? DEFAULT_JOB_DETAIL_STATE,
+      fetchJobDetail: state.fetchJobDetail,
+      setJobDetail: state.setJobDetail,
+    })),
+  );
+  const userJob = useMemo(
+    () => userJobs.find((job) => job.id === id || job.slug === id) ?? null,
+    [id, userJobs],
+  );
+
+  useEffect(() => {
+    if (userJob) {
+      setJobDetail(id, userJob);
+      return;
+    }
+
+    void fetchJobDetail(id);
+  }, [fetchJobDetail, id, setJobDetail, userJob]);
+
+  return {
+    job: userJob ?? jobDetail.job,
+    loading: userJob ? false : !jobDetail.hasFetched || jobDetail.loading,
+    error: userJob ? null : jobDetail.error,
+  };
 }

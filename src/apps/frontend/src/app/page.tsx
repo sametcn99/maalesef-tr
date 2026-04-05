@@ -13,7 +13,7 @@ import {
 } from "@/components/home";
 
 export default function Home() {
-  const { jobs, loading: jobsLoading } = useJobs();
+  const { jobs, loading: jobsLoading } = useJobs({ limit: 6 });
   const { stats, loading: statsLoading } = useStats();
 
   return (

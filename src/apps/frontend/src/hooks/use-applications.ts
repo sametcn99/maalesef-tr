@@ -1,78 +1,58 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import type { Application } from "@/types";
-import { getApplications, submitApplication } from "@/lib/api";
+import { useCallback, useEffect } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { useAuth } from "@/context/auth-context";
+import { useJobInteractionsStore } from "@/stores/job-interactions-store";
 
 export function useApplications() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchApplications = useCallback(async () => {
-    if (!isAuthenticated) {
-      setApplications([]);
-      setLoading(false);
-      return;
-    }
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await getApplications();
-      setApplications(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Başvurular yüklenemedi");
-    } finally {
-      setLoading(false);
-    }
-  }, [isAuthenticated]);
+  const { applications, loading, error, hasFetched, fetchApplications, reset } =
+    useJobInteractionsStore(
+      useShallow((state) => ({
+        applications: state.applications,
+        loading: state.applicationsLoading,
+        error: state.applicationsError,
+        hasFetched: state.applicationsFetched,
+        fetchApplications: state.fetchApplications,
+        reset: state.reset,
+      })),
+    );
 
   useEffect(() => {
-    if (authLoading) return;
-    fetchApplications();
-  }, [fetchApplications, authLoading]);
+    if (authLoading) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      reset();
+      return;
+    }
+
+    if (!hasFetched) {
+      void fetchApplications();
+    }
+  }, [authLoading, fetchApplications, hasFetched, isAuthenticated, reset]);
+
+  const refetch = useCallback(async () => {
+    await fetchApplications({ force: true });
+  }, [fetchApplications]);
 
   return {
     applications,
-    loading: loading || authLoading,
+    loading: authLoading || (isAuthenticated && !hasFetched) || loading,
     error,
-    refetch: fetchApplications,
+    refetch,
   };
 }
 
 export function useSubmitApplication() {
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const submit = useCallback(
-    async (
-      jobId: string,
-      jobTitle: string,
-      answers: Record<string, string>,
-      cvFile: File | null,
-      aiConsent: boolean,
-    ): Promise<Application | null> => {
-      try {
-        setSubmitting(true);
-        setError(null);
-        const result = await submitApplication(
-          jobId,
-          jobTitle,
-          answers,
-          cvFile,
-          aiConsent,
-        );
-        return result;
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Başvuru gönderilemedi");
-        return null;
-      } finally {
-        setSubmitting(false);
-      }
-    },
-    [],
+  const { submit, submitting, error } = useJobInteractionsStore(
+    useShallow((state) => ({
+      submit: state.submit,
+      submitting: state.submitting,
+      error: state.submitError,
+    })),
   );
 
   return { submit, submitting, error };

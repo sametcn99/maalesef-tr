@@ -1,36 +1,19 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { getStats } from "@/lib/api";
-
-interface Stats {
-  rejectedCount: number;
-  rejectionRate: number;
-  averageTurnaroundTime: string;
-}
+import { useEffect } from "react";
+import { useStatsStore } from "@/stores/stats-store";
 
 export function useStats() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const fetched = useRef(false);
+  const stats = useStatsStore((state) => state.stats);
+  const loading = useStatsStore((state) => state.loading);
+  const hasFetched = useStatsStore((state) => state.hasFetched);
+  const fetchStats = useStatsStore((state) => state.fetchStats);
 
   useEffect(() => {
-    if (fetched.current) return;
-    fetched.current = true;
-
-    async function fetchStats() {
-      try {
-        const data = await getStats();
-        setStats(data);
-      } catch (error) {
-        console.error("Failed to fetch stats", error);
-      } finally {
-        setLoading(false);
-      }
+    if (!hasFetched) {
+      void fetchStats();
     }
-
-    fetchStats();
-  }, []);
+  }, [fetchStats, hasFetched]);
 
   return { stats, loading };
 }

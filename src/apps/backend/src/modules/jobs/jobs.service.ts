@@ -4,8 +4,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { JobsRepository, type ViewedJobRecord } from './jobs.repository.js';
-import { CreateJobDto } from './dto/index.js';
+import {
+  JobsRepository,
+  type JobsListFilters,
+  type ViewedJobRecord,
+} from './jobs.repository.js';
+import { CreateJobDto, GetJobsQueryDto } from './dto/index.js';
 import { Job } from './entities/job.entity.js';
 import type { User } from '../users/entities/user.entity.js';
 import { UsersService } from '../users/users.service.js';
@@ -13,6 +17,15 @@ import { NotificationsService } from '../notifications/notifications.service.js'
 import { BadgesService } from '../badges/badges.service.js';
 import { BadgeType } from '../badges/entities/user-badge.entity.js';
 import * as crypto from 'crypto';
+
+export interface JobsListResponse {
+  items: Job[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasMore: boolean;
+}
 
 function slugify(text: string): string {
   const trMap: { [key: string]: string } = {
@@ -77,8 +90,15 @@ export class JobsService {
     return job;
   }
 
-  async findAll(): Promise<Job[]> {
-    return this.jobsRepository.findAll();
+  async findAll(query: GetJobsQueryDto): Promise<JobsListResponse> {
+    return this.listJobs(query);
+  }
+
+  async findFeed(
+    userId: string,
+    query: GetJobsQueryDto,
+  ): Promise<JobsListResponse> {
+    return this.listJobs(query, userId);
   }
 
   async findMine(userId: string): Promise<Job[]> {
@@ -135,5 +155,40 @@ export class JobsService {
         }),
       ),
     );
+  }
+
+  private async listJobs(
+    query: GetJobsQueryDto,
+    userId?: string,
+  ): Promise<JobsListResponse> {
+    const filters = this.normalizeListFilters(query, userId);
+    const { items, total } = await this.jobsRepository.findAll(filters);
+    const totalPages = total > 0 ? Math.ceil(total / filters.limit) : 0;
+
+    return {
+      items,
+      page: filters.page,
+      limit: filters.limit,
+      total,
+      totalPages,
+      hasMore: filters.page * filters.limit < total,
+    };
+  }
+
+  private normalizeListFilters(
+    query: GetJobsQueryDto,
+    userId?: string,
+  ): JobsListFilters {
+    return {
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+      company: query.company,
+      location: query.location,
+      sort: query.sort,
+      applied: userId ? query.applied : 'all',
+      viewed: userId ? query.viewed : 'all',
+      userId,
+    };
   }
 }

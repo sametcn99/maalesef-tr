@@ -1,40 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button, TextField } from "@radix-ui/themes";
 import { Mail, Lock, LogIn, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { useAuth } from "@/context/auth-context";
-import { Suspense } from "react";
+import { useShallow } from "zustand/react/shallow";
+import { useAuthFlowsStore } from "@/stores/auth-flows-store";
 
 function LoginForm() {
-  const { login } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/";
+  const {
+    email,
+    password,
+    loading,
+    error,
+    setEmail,
+    setPassword,
+    submitLogin,
+    resetLogin,
+  } = useAuthFlowsStore(
+    useShallow((state) => ({
+      email: state.loginEmail,
+      password: state.loginPassword,
+      loading: state.loginLoading,
+      error: state.loginError,
+      setEmail: state.setLoginEmail,
+      setPassword: state.setLoginPassword,
+      submitLogin: state.submitLogin,
+      resetLogin: state.resetLogin,
+    })),
+  );
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    resetLogin();
+    return resetLogin;
+  }, [resetLogin]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    const result = await login(email, password);
+    const result = await submitLogin();
 
     if (result.success) {
       toast.success("Giriş başarılı!");
       router.push(redirect);
-    } else {
-      setError(result.error || "Giriş yapılamadı.");
     }
-
-    setLoading(false);
   }
 
   return (

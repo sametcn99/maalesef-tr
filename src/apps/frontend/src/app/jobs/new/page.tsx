@@ -1,33 +1,37 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect } from "react";
 import { JobPostingForm } from "@/components/job/job-posting-form";
-import { useJobPosting } from "@/context/job-posting-context";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "@radix-ui/themes";
 import { ArrowLeft, LogIn } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import type { CreateJobPayload } from "@/types";
+import { useShallow } from "zustand/react/shallow";
+import { useJobPostingDraftStore } from "@/stores/job-posting-draft-store";
 
 export default function NewJobPage() {
   const router = useRouter();
-  const { addJob } = useJobPosting();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { isSubmitting, submitJob, reset } = useJobPostingDraftStore(
+    useShallow((state) => ({
+      isSubmitting: state.isSubmitting,
+      submitJob: state.submitJob,
+      reset: state.reset,
+    })),
+  );
 
-  async function handleSubmit(input: CreateJobPayload) {
-    setIsSubmitting(true);
+  useEffect(() => reset, [reset]);
+
+  async function handleSubmit() {
     try {
-      await addJob(input);
+      await submitJob();
       toast.success("İlan başarıyla yayınlandı!");
       router.push("/jobs");
     } catch (error) {
       console.error("İlan oluşturulamadı:", error);
       toast.error("İlan oluşturulurken bir hata oluştu.");
-    } finally {
-      setIsSubmitting(false);
     }
   }
 

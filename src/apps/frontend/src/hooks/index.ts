@@ -1,4 +1,4 @@
-export { useJobs, useJob, useMyJobs } from "./use-jobs";
+export { useJobs, useJobsFeed, useJob, useMyJobs } from "./use-jobs";
 export { useApplications, useSubmitApplication } from "./use-applications";
 export { useViewedJobs, useJobInteractions } from "./use-job-interactions";
 export { useNotifications } from "./use-notifications";

@@ -1,47 +1,58 @@
 "use client";
 
-import { useRef, useState, useCallback, useId } from "react";
+import { useRef, useState, useCallback, useEffect, useId } from "react";
 import { Button, Badge } from "@radix-ui/themes";
 import { Upload, FileText, X, CheckCircle2 } from "lucide-react";
 
 interface CvUploadProps {
+  file: File | null;
+  error?: string | null;
   onFileSelect: (file: File | null) => void;
+  onErrorChange?: (error: string | null) => void;
   disabled?: boolean;
 }
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
-export function CvUpload({ onFileSelect, disabled }: CvUploadProps) {
+export function CvUpload({
+  file,
+  error,
+  onFileSelect,
+  onErrorChange,
+  disabled,
+}: CvUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const inputId = useId();
-  const [file, setFile] = useState<File | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    if (!file && inputRef.current) {
+      inputRef.current.value = "";
+    }
+  }, [file]);
 
   const handleFile = useCallback(
     (selected: File | null) => {
-      setError(null);
+      onErrorChange?.(null);
 
       if (!selected) {
-        setFile(null);
         onFileSelect(null);
         return;
       }
 
       if (selected.type !== "application/pdf") {
-        setError("Yalnızca PDF dosyaları kabul edilmektedir.");
+        onErrorChange?.("Yalnızca PDF dosyaları kabul edilmektedir.");
         return;
       }
 
       if (selected.size > MAX_SIZE) {
-        setError("Dosya boyutu en fazla 5MB olabilir.");
+        onErrorChange?.("Dosya boyutu en fazla 5MB olabilir.");
         return;
       }
 
-      setFile(selected);
       onFileSelect(selected);
     },
-    [onFileSelect],
+    [onErrorChange, onFileSelect],
   );
 
   const handleDrop = useCallback(
@@ -55,8 +66,7 @@ export function CvUpload({ onFileSelect, disabled }: CvUploadProps) {
   );
 
   const clearFile = () => {
-    setFile(null);
-    setError(null);
+    onErrorChange?.(null);
     onFileSelect(null);
     if (inputRef.current) inputRef.current.value = "";
   };
@@ -78,7 +88,7 @@ export function CvUpload({ onFileSelect, disabled }: CvUploadProps) {
           setIsDragging(true);
         }}
         onDragLeave={() => setIsDragging(false)}
-        className={`relative flex w-full min-h-[140px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent ${
+        className={`relative flex w-full min-h-35 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent ${
           error
             ? "border-red-300 bg-red-50/50"
             : isDragging

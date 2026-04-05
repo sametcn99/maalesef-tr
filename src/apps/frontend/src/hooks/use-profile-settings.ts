@@ -1,78 +1,59 @@
-import { useState, useEffect } from "react";
-import {
-  type ProfileSettings,
-  type VisibilitySettings,
-  getProfileSettings,
-  updateProfileSettings,
-  enableProfileSharing,
-  disableProfileSharing,
-} from "@/lib/api";
+import { useEffect, useMemo } from "react";
+import { useProfileSettingsStore } from "@/stores/profile-settings-store";
 
 export function useProfileSettings(open: boolean) {
-  const [settings, setSettings] = useState<ProfileSettings | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const settings = useProfileSettingsStore((state) => state.settings);
+  const loading = useProfileSettingsStore((state) => state.loading);
+  const error = useProfileSettingsStore((state) => state.error);
+  const hasFetched = useProfileSettingsStore((state) => state.hasFetched);
+  const localVisibility = useProfileSettingsStore(
+    (state) => state.localVisibility,
+  );
+  const localBio = useProfileSettingsStore((state) => state.localBio);
+  const saving = useProfileSettingsStore((state) => state.saving);
+  const isCollapsed = useProfileSettingsStore((state) => state.isCollapsed);
+  const fetchSettings = useProfileSettingsStore((state) => state.fetchSettings);
+  const setLocalBio = useProfileSettingsStore((state) => state.setLocalBio);
+  const setLocalVisibilityField = useProfileSettingsStore(
+    (state) => state.setLocalVisibilityField,
+  );
+  const toggleSharing = useProfileSettingsStore((state) => state.toggleSharing);
+  const saveProfile = useProfileSettingsStore((state) => state.saveProfile);
+  const setIsCollapsed = useProfileSettingsStore(
+    (state) => state.setIsCollapsed,
+  );
 
   useEffect(() => {
-    if (open) {
-      setLoading(true);
-      getProfileSettings()
-        .then(setSettings)
-        .catch((err) => setError(err.message))
-        .finally(() => {
-          setLoading(false);
-        });
+    if (open && !hasFetched) {
+      void fetchSettings();
     }
-  }, [open]);
+  }, [fetchSettings, hasFetched, open]);
 
-  const toggleSharing = async (enabled: boolean) => {
-    setLoading(true);
-    try {
-      if (enabled) {
-        const newSettings = await enableProfileSharing();
-        setSettings(newSettings);
-      } else {
-        const newSettings = await disableProfileSharing();
-        setSettings(newSettings);
-      }
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "Bilinmeyen bir hata oluştu",
-      );
-    } finally {
-      setLoading(false);
-    }
+  const hasChanges = useMemo(
+    () =>
+      Boolean(
+        settings &&
+          localVisibility &&
+          (JSON.stringify(localVisibility) !==
+            JSON.stringify(settings.visibilitySettings) ||
+            localBio !== (settings.bio || "")),
+      ),
+    [localBio, localVisibility, settings],
+  );
+
+  return {
+    settings,
+    loading,
+    error,
+    localVisibility,
+    localBio,
+    saving,
+    isCollapsed,
+    hasChanges,
+    toggleSharing,
+    setLocalBio,
+    setLocalVisibilityField,
+    saveProfile,
+    setIsCollapsed,
   };
-
-  const updateProfile = async (payload: {
-    bio?: string | null;
-    visibilitySettings?: Partial<VisibilitySettings>;
-  }) => {
-    if (!settings) return;
-
-    const previous = settings;
-
-    // Optimistic update
-    const newSettings = { ...settings };
-    if (payload.bio !== undefined) newSettings.bio = payload.bio;
-    if (payload.visibilitySettings) {
-      newSettings.visibilitySettings = {
-        ...settings.visibilitySettings,
-        ...payload.visibilitySettings,
-      };
-    }
-    setSettings(newSettings);
-
-    try {
-      const updated = await updateProfileSettings(payload);
-      setSettings(updated);
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "Bilinmeyen bir hata oluştu",
-      );
-      setSettings(previous);
-    }
-  };
-
-  return { settings, loading, error, toggleSharing, updateProfile };
 }

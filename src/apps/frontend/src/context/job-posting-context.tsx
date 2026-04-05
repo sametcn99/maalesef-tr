@@ -1,16 +1,10 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-  type ReactNode,
-} from "react";
+import { useEffect, type ReactNode } from "react";
 import type { CreateJobPayload, Job } from "@/types";
-import { createJob as createJobApi } from "@/lib/api";
+import { useShallow } from "zustand/react/shallow";
 import { useAuth } from "./auth-context";
+import { useJobPostingStore } from "@/stores/job-posting-store";
 
 interface JobPostingContextType {
   userJobs: Job[];
@@ -18,100 +12,31 @@ interface JobPostingContextType {
   removeJob: (id: string) => void;
 }
 
-const JobPostingContext = createContext<JobPostingContextType | null>(null);
-
 export function JobPostingProvider({ children }: { children: ReactNode }) {
-  const [userJobs, setUserJobs] = useState<Job[]>([]);
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+  const syncOwner = useJobPostingStore((state) => state.syncOwner);
+  const clear = useJobPostingStore((state) => state.clear);
 
   useEffect(() => {
-    if (!user) return;
+    if (user) {
+      syncOwner(user);
+      return;
+    }
 
-    setUserJobs((prev) => {
-      const enriched = prev.map((job) => {
-        if (job.createdBy) return job;
-        return {
-          ...job,
-          createdBy: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            slug: user.slug ?? null,
-          },
-        };
-      });
+    if (!isLoading) {
+      clear();
+    }
+  }, [clear, isLoading, syncOwner, user]);
 
-      return enriched;
-    });
-  }, [user]);
-
-  const addJob = useCallback(
-    async (input: CreateJobPayload): Promise<Job> => {
-      const owner =
-        user != null
-          ? {
-              id: user.id,
-              name: user.name,
-              email: user.email,
-              slug: user.slug ?? null,
-            }
-          : undefined;
-
-      const optimisticJob: Job = {
-        id: `user-job-${Date.now()}`,
-        slug: null,
-        ...input,
-        createdAt: new Date().toISOString(),
-        createdBy: owner,
-      };
-
-      try {
-        const created = await createJobApi(input);
-        const normalized: Job = {
-          ...created,
-          createdBy: created.createdBy ?? owner,
-        };
-        setUserJobs((prev) => {
-          const next = [
-            normalized,
-            ...prev.filter((j) => j.id !== normalized.id),
-          ];
-          return next;
-        });
-        return normalized;
-      } catch (error) {
-        // Keep optimistic job in state if backend request fails
-        setUserJobs((prev) => {
-          const next = [optimisticJob, ...prev];
-          return next;
-        });
-        console.error("İlan oluşturulamadı:", error);
-        throw error instanceof Error
-          ? error
-          : new Error("İlan oluşturma işlemi tamamlanamadı.");
-      }
-    },
-    [user],
-  );
-
-  const removeJob = useCallback((id: string) => {
-    setUserJobs((prev) => {
-      const next = prev.filter((j) => j.id !== id);
-      return next;
-    });
-  }, []);
-
-  return (
-    <JobPostingContext.Provider value={{ userJobs, addJob, removeJob }}>
-      {children}
-    </JobPostingContext.Provider>
-  );
+  return children;
 }
 
-export function useJobPosting() {
-  const ctx = useContext(JobPostingContext);
-  if (!ctx) {
-    throw new Error("useJobPosting must be used inside JobPostingProvider");
-  }
-  return ctx;
+export function useJobPosting(): JobPostingContextType {
+  return useJobPostingStore(
+    useShallow((state) => ({
+      userJobs: state.userJobs,
+      addJob: state.addJob,
+      removeJob: state.removeJob,
+    })),
+  );
 }

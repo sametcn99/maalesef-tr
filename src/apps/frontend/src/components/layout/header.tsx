@@ -6,23 +6,37 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { FaGithub, FaLinkedin, FaXTwitter } from "react-icons/fa6";
-import { useState } from "react";
+import { useEffect } from "react";
 import Image from "next/image";
 import { createPortal } from "react-dom";
+import { useShallow } from "zustand/react/shallow";
 import { useAuth } from "@/context/auth-context";
 import { useNotifications } from "@/hooks";
+import { useLayoutUiStore } from "@/stores/layout-ui-store";
 
 const navItems = [{ label: "İlanlar", href: "/jobs", requiresAuth: false }];
 
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isMobileMenuOpen, setMobileMenuOpen, toggleMobileMenu } =
+    useLayoutUiStore(
+      useShallow((state) => ({
+        isMobileMenuOpen: state.isMobileMenuOpen,
+        setMobileMenuOpen: state.setMobileMenuOpen,
+        toggleMobileMenu: state.toggleMobileMenu,
+      })),
+    );
   const { isAuthenticated, user, logout, isLoading } = useAuth();
   const { unreadCount } = useNotifications();
   const currentYear = new Date().getFullYear();
 
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [setMobileMenuOpen]);
+
   function handleLogout() {
+    setMobileMenuOpen(false);
     logout();
     router.push("/");
   }
@@ -38,11 +52,11 @@ export function Header() {
           <button
             data-umami-event="header_mobile_menu_toggle_click"
             type="button"
-            aria-label={isMenuOpen ? "Menüyü kapat" : "Menüyü aç"}
-            onClick={() => setIsMenuOpen((open) => !open)}
+            aria-label={isMobileMenuOpen ? "Menüyü kapat" : "Menüyü aç"}
+            onClick={toggleMobileMenu}
             className="flex h-10 w-10 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-hover hover:text-foreground sm:hidden"
           >
-            {isMenuOpen ? <X size={18} /> : <Menu size={18} />}
+            {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
 
           <Link
@@ -186,7 +200,7 @@ export function Header() {
       {typeof document !== "undefined" &&
         createPortal(
           <AnimatePresence>
-            {isMenuOpen && (
+            {isMobileMenuOpen && (
               <div className="sm:hidden">
                 <motion.div
                   className="fixed inset-0 z-90 bg-black/30"
@@ -195,9 +209,9 @@ export function Header() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={() => setMobileMenuOpen(false)}
                   onKeyDown={(e) => {
-                    if (e.key === "Escape") setIsMenuOpen(false);
+                    if (e.key === "Escape") setMobileMenuOpen(false);
                   }}
                 />
                 <motion.div
@@ -216,7 +230,7 @@ export function Header() {
                         data-umami-event="header_mobile_menu_close_click"
                         type="button"
                         aria-label="Menüyü kapat"
-                        onClick={() => setIsMenuOpen(false)}
+                        onClick={() => setMobileMenuOpen(false)}
                         className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-surface-hover"
                       >
                         <X size={18} />
@@ -232,7 +246,7 @@ export function Header() {
                               data-umami-event="header_mobile_nav_jobs_click"
                               key={item.href}
                               href={item.href}
-                              onClick={() => setIsMenuOpen(false)}
+                              onClick={() => setMobileMenuOpen(false)}
                               className={`block rounded-lg px-4 py-3 text-base font-medium transition-colors ${
                                 isActive
                                   ? "bg-accent-muted text-accent"
@@ -250,7 +264,7 @@ export function Header() {
                               <Link
                                 data-umami-event="header_mobile_profile_click"
                                 href="/profile"
-                                onClick={() => setIsMenuOpen(false)}
+                                onClick={() => setMobileMenuOpen(false)}
                                 className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-surface-hover"
                               >
                                 <User size={18} />
@@ -259,7 +273,7 @@ export function Header() {
                               <Link
                                 data-umami-event="layout_header_go_jobs_new_click_2"
                                 href="/jobs/new"
-                                onClick={() => setIsMenuOpen(false)}
+                                onClick={() => setMobileMenuOpen(false)}
                                 className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-surface-hover"
                               >
                                 <Plus size={18} />
@@ -270,7 +284,6 @@ export function Header() {
                                 type="button"
                                 onClick={() => {
                                   handleLogout();
-                                  setIsMenuOpen(false);
                                 }}
                                 className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-base font-medium text-red-500 transition-colors hover:bg-surface-hover"
                               >
@@ -282,7 +295,7 @@ export function Header() {
                             <Link
                               data-umami-event="layout_header_go_login_click_3"
                               href="/login"
-                              onClick={() => setIsMenuOpen(false)}
+                              onClick={() => setMobileMenuOpen(false)}
                               className="block w-full rounded-lg px-4 py-3 text-base font-medium text-accent transition-colors hover:bg-accent-muted"
                             >
                               Giriş Yap
@@ -297,7 +310,7 @@ export function Header() {
                         data-umami-event="layout_footer_go_home_click"
                         href="/"
                         className="flex items-center gap-2.5"
-                        onClick={() => setIsMenuOpen(false)}
+                        onClick={() => setMobileMenuOpen(false)}
                       >
                         <Image
                           src="/favicon.ico"
@@ -356,7 +369,7 @@ export function Header() {
                         <Link
                           data-umami-event="layout_footer_go_about_click"
                           href="/about"
-                          onClick={() => setIsMenuOpen(false)}
+                          onClick={() => setMobileMenuOpen(false)}
                           className="text-muted transition-colors hover:text-foreground"
                         >
                           Hakkında
@@ -372,7 +385,7 @@ export function Header() {
                         <Link
                           data-umami-event="layout_footer_go_gizlilik_politikasi_click"
                           href="/gizlilik-politikasi"
-                          onClick={() => setIsMenuOpen(false)}
+                          onClick={() => setMobileMenuOpen(false)}
                           className="text-muted transition-colors hover:text-foreground"
                         >
                           Gizlilik Politikası
@@ -380,7 +393,7 @@ export function Header() {
                         <Link
                           data-umami-event="layout_footer_go_kullanim_sartlari_click"
                           href="/kullanim-sartlari"
-                          onClick={() => setIsMenuOpen(false)}
+                          onClick={() => setMobileMenuOpen(false)}
                           className="text-muted transition-colors hover:text-foreground"
                         >
                           Kullanım Şartları

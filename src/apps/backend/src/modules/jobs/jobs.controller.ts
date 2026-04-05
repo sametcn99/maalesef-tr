@@ -7,6 +7,7 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -19,9 +20,15 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { JobsService } from './jobs.service.js';
-import { CreateJobDto } from './dto/index.js';
+import {
+  CreateJobDto,
+  GetJobsQueryDto,
+  JOB_INTERACTION_FILTER_VALUES,
+  JOB_SORT_VALUES,
+} from './dto/index.js';
 import { Public } from '../auth/decorators/index.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 
@@ -31,11 +38,55 @@ export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
 
   @Public()
-  @ApiOperation({ summary: 'List all job postings' })
-  @ApiOkResponse({ description: 'Returns all jobs.' })
+  @ApiOperation({ summary: 'List job postings with pagination and filters' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'company', required: false, type: String })
+  @ApiQuery({ name: 'location', required: false, type: String })
+  @ApiQuery({
+    name: 'sort',
+    required: false,
+    enum: JOB_SORT_VALUES,
+  })
+  @ApiOkResponse({ description: 'Returns paginated jobs.' })
   @Get()
-  async findAll() {
-    return this.jobsService.findAll();
+  async findAll(@Query() query: GetJobsQueryDto) {
+    return this.jobsService.findAll(query);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'List personalized job feed with pagination and filters',
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'company', required: false, type: String })
+  @ApiQuery({ name: 'location', required: false, type: String })
+  @ApiQuery({
+    name: 'sort',
+    required: false,
+    enum: JOB_SORT_VALUES,
+  })
+  @ApiQuery({
+    name: 'applied',
+    required: false,
+    enum: JOB_INTERACTION_FILTER_VALUES,
+  })
+  @ApiQuery({
+    name: 'viewed',
+    required: false,
+    enum: JOB_INTERACTION_FILTER_VALUES,
+  })
+  @ApiOkResponse({ description: 'Returns personalized paginated jobs.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
+  @Get('feed')
+  async findFeed(
+    @CurrentUser('id') userId: string,
+    @Query() query: GetJobsQueryDto,
+  ) {
+    return this.jobsService.findFeed(userId, query);
   }
 
   @ApiBearerAuth()
