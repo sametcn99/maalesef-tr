@@ -3,40 +3,18 @@
 import { Button } from "@radix-ui/themes";
 import { Shield, Clock, XCircle, ChevronDown } from "lucide-react";
 import Link from "next/link";
+import { type Variants, type Easing, motion } from "framer-motion";
 import {
-  type Variants,
-  type Easing,
-  motion,
-  useMotionValue,
-  useTransform,
-  animate,
-} from "framer-motion";
-import { useEffect, useState } from "react";
-import { rejectionCards } from "@/lib/rejection-cards";
-
-// Animated counter hook
-function useAnimatedCounter(target: number, duration = 2) {
-  const count = useMotionValue(0);
-  const rounded = useTransform(count, (v) => Math.round(v));
-  const [display, setDisplay] = useState(0);
-
-  useEffect(() => {
-    const controls = animate(count, target, {
-      duration,
-      ease: "easeOut",
-    });
-    const unsubscribe = rounded.on("change", (v) => setDisplay(v));
-    return () => {
-      controls.stop();
-      unsubscribe();
-    };
-  }, [target, duration, count, rounded]);
-
-  return display;
-}
-
-// Floating rejection cards data — distributed in 6 columns (3 left, 3 right)
-// avoiding center text area and preventing overlaps
+  startTransition,
+  type CSSProperties,
+  useEffect,
+  useState,
+} from "react";
+import {
+  buildRejectionCardLayout,
+  getRejectionCardViewport,
+  type PositionedRejectionCard,
+} from "@/lib/rejection-cards";
 
 const containerVariants: Variants = {
   hidden: {},
@@ -61,37 +39,146 @@ const itemVariants: Variants = {
   },
 };
 
-const _badgeVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.8, y: 10 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: "easeOut" as Easing,
-    },
-  },
-};
+const trustBadges = [
+  { icon: XCircle, text: "Sıfır Olumlu Geri Dönüş Garantisi" },
+  { icon: Shield, text: "Verileriniz Ret Sonrası Anında Silinir" },
+  { icon: Clock, text: "Dünyanın En Hızlı Ret Yanıtı" },
+];
 
-export function HeroSection() {
-  const _rejectionCount = useAnimatedCounter(14_328, 2.5);
-  const [mounted, setMounted] = useState(false);
-  const [shuffledCards, setShuffledCards] = useState<typeof rejectionCards>([]);
-  const [shuffledDelays, setShuffledDelays] = useState<number[]>([]);
+function useDecorativeRejectionCards() {
+  const [cards, setCards] = useState<PositionedRejectionCard[]>([]);
 
   useEffect(() => {
-    setMounted(true);
-    // Shuffle cards to randomize text positions
-    const cards = [...rejectionCards].sort(() => Math.random() - 0.5);
-    setShuffledCards(cards);
+    let frameId = 0;
+    let currentLayoutKey = "";
+    const reducedMotionQuery = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    );
 
-    // Shuffle delays independently to randomize the appearance sequence
-    const delays = rejectionCards
-      .map((c) => c.delay)
-      .sort(() => Math.random() - 0.5);
-    setShuffledDelays(delays);
+    const syncCards = () => {
+      frameId = 0;
+
+      const viewport = getRejectionCardViewport(window.innerWidth);
+      const nextLayoutKey = `${viewport}-${reducedMotionQuery.matches ? "reduce" : "full"}`;
+
+      if (nextLayoutKey === currentLayoutKey) {
+        return;
+      }
+
+      currentLayoutKey = nextLayoutKey;
+
+      startTransition(() => {
+        setCards(
+          buildRejectionCardLayout({
+            width: window.innerWidth,
+            reducedMotion: reducedMotionQuery.matches,
+          }),
+        );
+      });
+    };
+
+    const scheduleSync = () => {
+      if (frameId) {
+        window.cancelAnimationFrame(frameId);
+      }
+
+      frameId = window.requestAnimationFrame(syncCards);
+    };
+
+    scheduleSync();
+
+    const handleResize = () => {
+      const viewport = getRejectionCardViewport(window.innerWidth);
+      const nextLayoutKey = `${viewport}-${reducedMotionQuery.matches ? "reduce" : "full"}`;
+
+      if (nextLayoutKey !== currentLayoutKey) {
+        scheduleSync();
+      }
+    };
+
+    window.addEventListener("resize", handleResize, { passive: true });
+    reducedMotionQuery.addEventListener("change", scheduleSync);
+
+    return () => {
+      if (frameId) {
+        window.cancelAnimationFrame(frameId);
+      }
+
+      window.removeEventListener("resize", handleResize);
+      reducedMotionQuery.removeEventListener("change", scheduleSync);
+    };
   }, []);
+
+  return cards;
+}
+
+function RejectionCardLayer({ cards }: { cards: PositionedRejectionCard[] }) {
+  if (!cards.length) {
+    return null;
+  }
+
+  return (
+    <div
+      aria-hidden="true"
+      className="hero-rejection-cloud absolute inset-0 pointer-events-none overflow-hidden"
+    >
+      {cards.map((card) => {
+        const animationStyle = {
+          opacity: card.opacity,
+          "--card-float-delay": `${card.floatDelayMs}ms`,
+          "--card-float-duration": `${card.floatDurationMs}ms`,
+          "--card-float-distance": `${card.floatDistancePx}px`,
+        } as CSSProperties;
+
+        return (
+          <div
+            key={card.id}
+            className="hero-rejection-card-shell absolute z-0"
+            style={{
+              top: card.top,
+              ...(card.side === "left"
+                ? { left: card.offset }
+                : { right: card.offset }),
+              transform: `rotate(${card.rotation}deg)`,
+            }}
+          >
+            <div
+              className="hero-rejection-card-enter"
+              style={{ animationDelay: `${card.enterDelayMs}ms` }}
+            >
+              <div
+                className={
+                  card.floatDistancePx > 0 ? "hero-rejection-card-float" : ""
+                }
+                style={animationStyle}
+              >
+                <div className="hero-rejection-card-surface border border-border/60 rounded-xl px-3 py-2.5 shadow-md max-w-32 sm:max-w-40 sm:px-4 sm:py-3 sm:shadow-lg lg:max-w-44">
+                  <div className="flex items-start gap-2.5 sm:gap-3">
+                    <card.icon
+                      size={16}
+                      className="text-red-400 mt-0.5 shrink-0"
+                    />
+                    <div>
+                      <p className="text-[11px] font-medium text-foreground leading-snug sm:text-xs">
+                        {card.text}
+                      </p>
+                      <p className="text-[9px] text-muted-light mt-0.5 sm:text-[10px]">
+                        {card.subtext}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export function HeroSection() {
+  const decorativeCards = useDecorativeRejectionCards();
 
   return (
     <section className="relative min-h-[calc(100vh-4rem)] flex flex-col justify-center py-16 px-4 overflow-hidden">
@@ -125,57 +212,7 @@ export function HeroSection() {
         }}
       />
 
-      {/* Floating rejection cards - limited on mobile, full on desktop */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {mounted &&
-          shuffledCards.map((card, i) => {
-            const delay = shuffledDelays[i] ?? card.delay;
-            return (
-              <motion.div
-                key={`${card.text}-${card.top}-${card.left || card.right}`}
-                className="absolute glass border border-border/60 rounded-xl px-4 py-3 shadow-lg max-w-40 sm:max-w-48 opacity-70"
-                style={{
-                  top: card.top,
-                  left: card.left,
-                  right: card.right,
-                  rotate: card.rotation,
-                  zIndex: 0,
-                }}
-                initial={{ opacity: 0, scale: 0.6, y: 40 }}
-                animate={{
-                  opacity: 1,
-                  scale: 1,
-                  y: [0, -8, 0],
-                }}
-                transition={{
-                  opacity: { delay: delay, duration: 0.6 },
-                  scale: { delay: delay, duration: 0.6, ease: "backOut" },
-                  y: {
-                    delay: delay + 0.6,
-                    duration: 4 + (i % 10),
-                    repeat: Number.POSITIVE_INFINITY,
-                    ease: "easeInOut",
-                  },
-                }}
-              >
-                <div className="flex items-start gap-3">
-                  <card.icon
-                    size={18}
-                    className="text-red-400 mt-0.5 shrink-0"
-                  />
-                  <div>
-                    <p className="text-xs font-medium text-foreground leading-snug">
-                      {card.text}
-                    </p>
-                    <p className="text-[10px] text-muted-light mt-0.5">
-                      {card.subtext}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
-      </div>
+      <RejectionCardLayer cards={decorativeCards} />
 
       {/* Main content */}
       <motion.div
@@ -252,11 +289,7 @@ export function HeroSection() {
           variants={itemVariants}
           className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-light"
         >
-          {[
-            { icon: XCircle, text: "Sıfır Olumlu Geri Dönüş Garantisi" },
-            { icon: Shield, text: "Verileriniz Ret Sonrası Anında Silinir" },
-            { icon: Clock, text: "Dünyanın En Hızlı Ret Yanıtı" },
-          ].map((item, i) => (
+          {trustBadges.map((item, i) => (
             <motion.div
               // biome-ignore lint/suspicious/noArrayIndexKey: Static content
               key={i}
