@@ -4,7 +4,7 @@ import Link from "next/link";
 export function CTASection() {
   return (
     <section className="relative px-4 py-24 sm:px-6 overflow-hidden">
-      <div className="absolute inset-0 bg-foreground skew-y-1 transform origin-bottom-right scale-110" />
+      <div className="absolute inset-0 bg-foreground [clip-path:polygon(0_0,100%_8%,100%_100%,0_100%)]" />
       <div className="relative z-10 max-w-4xl mx-auto text-center text-background">
         <h2 className="text-4xl font-bold mb-6">
           Kariyerinizde Yeni Bir Sayfa Açmayın
