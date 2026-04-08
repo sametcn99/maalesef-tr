@@ -6,6 +6,8 @@ import {
   Matches,
 } from 'class-validator';
 import {
+  getPasswordMaxBytesMessage,
+  MaxPasswordUtf8Bytes,
   PASSWORD_MIN_LENGTH,
   PASSWORD_REGEX,
   PASSWORD_VALIDATION_MESSAGE,
@@ -26,6 +28,9 @@ export class RegisterDto {
   })
   @Matches(PASSWORD_REGEX, {
     message: PASSWORD_VALIDATION_MESSAGE,
+  })
+  @MaxPasswordUtf8Bytes({
+    message: getPasswordMaxBytesMessage(),
   })
   @IsNotEmpty({ message: 'Şifre alanı zorunludur.' })
   password!: string;

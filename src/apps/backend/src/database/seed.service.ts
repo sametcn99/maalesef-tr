@@ -14,6 +14,10 @@ import {
   UserBadge,
   BadgeType,
 } from '../modules/badges/entities/user-badge.entity.js';
+import {
+  getPasswordMaxBytesMessage,
+  isPasswordWithinBcryptLimit,
+} from '../modules/auth/dto/password-policy.js';
 
 import * as crypto from 'crypto';
 
@@ -630,6 +634,12 @@ export class SeedService implements OnApplicationBootstrap {
   }
 
   private getAdminPassword(): string {
-    return this.configService.getOrThrow<string>('ADMIN_PASSWORD');
+    const password = this.configService.getOrThrow<string>('ADMIN_PASSWORD');
+
+    if (!isPasswordWithinBcryptLimit(password)) {
+      throw new Error(getPasswordMaxBytesMessage('Admin şifresi'));
+    }
+
+    return password;
   }
 }

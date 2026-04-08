@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Application } from './entities/application.entity.js';
 import { ApplicationsController } from './applications.controller.js';
@@ -12,6 +12,7 @@ import { UsersModule } from '../users/users.module.js';
 import { MailModule } from '../mail/mail.module.js';
 import { BadgesModule } from '../badges/badges.module.js';
 import { ApplicationTemplatesRegistrar } from './application-templates.registrar.js';
+import { ApplicationEvaluationAiService } from './application-evaluation-ai.service.js';
 
 @Module({
   imports: [
@@ -21,11 +22,12 @@ import { ApplicationTemplatesRegistrar } from './application-templates.registrar
     MailModule,
     TemplateModule,
     BadgesModule,
-    forwardRef(() => NotificationsModule),
+    NotificationsModule,
   ],
   controllers: [ApplicationsController],
   providers: [
     ApplicationTemplatesRegistrar,
+    ApplicationEvaluationAiService,
     ApplicationsService,
     ApplicationsRepository,
     ApplicationsEvaluationService,

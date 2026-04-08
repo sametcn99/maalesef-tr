@@ -48,6 +48,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change-me}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-me-too}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY:-}
       GOOGLE_AI_MODEL: ${GOOGLE_AI_MODEL:-gemini-flash-latest}

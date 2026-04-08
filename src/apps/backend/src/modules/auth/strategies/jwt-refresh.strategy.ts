@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import type { Request } from 'express';
+import * as bcrypt from 'bcrypt';
 import { UsersService } from '../../users/users.service.js';
 
 interface JwtPayload {
@@ -25,7 +26,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
           return (request?.cookies?.refreshToken as string) || null;
         },
       ]),
-      secretOrKey: configService.getOrThrow<string>('JWT_SECRET'),
+      secretOrKey: configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
       passReqToCallback: true,
     });
   }
@@ -34,7 +35,12 @@ export class JwtRefreshStrategy extends PassportStrategy(
     const refreshToken = req.cookies?.refreshToken as string | undefined;
     const user = await this.usersService.findByIdWithRefreshToken(payload.sub);
 
-    if (!user || user.refreshToken !== refreshToken) {
+    if (!user?.refreshToken || !refreshToken) {
+      throw new UnauthorizedException('Geçersiz refresh token.');
+    }
+
+    const matches = await bcrypt.compare(refreshToken, user.refreshToken);
+    if (!matches) {
       throw new UnauthorizedException('Geçersiz refresh token.');
     }
 

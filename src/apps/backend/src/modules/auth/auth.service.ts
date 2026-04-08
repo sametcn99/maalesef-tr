@@ -7,9 +7,14 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import type { JwtSignOptions } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { UsersService } from '../users/users.service.js';
+import {
+  getPasswordMaxBytesMessage,
+  isPasswordWithinBcryptLimit,
+} from './dto/password-policy.js';
 import {
   RegisterDto,
   LoginDto,
@@ -22,6 +27,7 @@ import {
 import { MailService } from '../mail/mail.service.js';
 
 const SALT_ROUNDS = 12;
+const REFRESH_TOKEN_SALT_ROUNDS = 10;
 const EMAIL_VERIFICATION_TTL_MS = 2 * 24 * 60 * 60 * 1000;
 const EMAIL_VERIFICATION_RESEND_COOLDOWN_MS = 5 * 60 * 1000;
 const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
@@ -45,6 +51,8 @@ export class AuthService {
     if (existingUser) {
       throw new ConflictException('Bu e-posta adresi zaten kullanımda.');
     }
+
+    this.assertPasswordWithinBcryptLimit(dto.password);
 
     const hashedPassword = await bcrypt.hash(dto.password, SALT_ROUNDS);
 
@@ -318,6 +326,8 @@ export class AuthService {
       throw new BadRequestException('Yeni şifre mevcut şifre ile aynı olamaz.');
     }
 
+    this.assertPasswordWithinBcryptLimit(dto.newPassword, 'Yeni şifre');
+
     const hashed = await bcrypt.hash(dto.newPassword, SALT_ROUNDS);
     await this.usersService.updatePassword(user.id, hashed, {
       clearResetToken: true,
@@ -345,6 +355,8 @@ export class AuthService {
       throw new BadRequestException('Yeni şifre mevcut şifre ile aynı olamaz.');
     }
 
+    this.assertPasswordWithinBcryptLimit(dto.newPassword, 'Yeni şifre');
+
     const hashed = await bcrypt.hash(dto.newPassword, SALT_ROUNDS);
     await this.usersService.updatePassword(userId, hashed);
 
@@ -369,24 +381,55 @@ export class AuthService {
   }
 
   private async generateAuthTokens(userId: string, email: string) {
+    const accessTokenExpiresIn = this.getJwtExpiresIn('JWT_EXPIRES_IN');
+    const refreshTokenExpiresIn = this.getJwtExpiresIn(
+      'JWT_REFRESH_EXPIRES_IN',
+    );
+
     const accessToken = this.jwtService.sign(
       { sub: userId, email },
       {
         secret: this.configService.getOrThrow<string>('JWT_SECRET'),
-        expiresIn: '15m',
+        expiresIn: accessTokenExpiresIn,
       },
     );
 
     const refreshToken = this.jwtService.sign(
       { sub: userId, email },
       {
-        secret: this.configService.getOrThrow<string>('JWT_SECRET'),
-        expiresIn: '7d',
+        secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
+        expiresIn: refreshTokenExpiresIn,
       },
     );
 
-    await this.usersService.updateRefreshToken(userId, refreshToken);
+    const refreshTokenHash = await bcrypt.hash(
+      refreshToken,
+      REFRESH_TOKEN_SALT_ROUNDS,
+    );
+
+    await this.usersService.updateRefreshToken(userId, refreshTokenHash);
 
     return { accessToken, refreshToken };
+  }
+
+  private getJwtExpiresIn(
+    key: 'JWT_EXPIRES_IN' | 'JWT_REFRESH_EXPIRES_IN',
+  ): JwtSignOptions['expiresIn'] {
+    const value = this.configService.getOrThrow<string>(key);
+
+    if (/^\d+$/.test(value)) {
+      return Number(value);
+    }
+
+    return value as JwtSignOptions['expiresIn'];
+  }
+
+  private assertPasswordWithinBcryptLimit(
+    password: string,
+    label = 'Şifre',
+  ): void {
+    if (!isPasswordWithinBcryptLimit(password)) {
+      throw new BadRequestException(getPasswordMaxBytesMessage(label));
+    }
   }
 }

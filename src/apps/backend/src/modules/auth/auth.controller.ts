@@ -24,7 +24,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import type { Response, Request, CookieOptions } from 'express';
+import type { Response, CookieOptions } from 'express';
 import { AuthService } from './auth.service.js';
 import {
   RegisterDto,
@@ -241,7 +241,7 @@ export class AuthController {
   private setRefreshTokenCookie(res: Response, refreshToken: string) {
     res.cookie('refreshToken', refreshToken, {
       ...this.getRefreshTokenCookieOptions(),
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: this.getRefreshTokenCookieMaxAge(),
     });
   }
 
@@ -254,5 +254,35 @@ export class AuthController {
       sameSite: isProduction ? 'none' : 'lax',
       path: '/',
     };
+  }
+
+  private getRefreshTokenCookieMaxAge(): number {
+    const expiresIn =
+      this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') ?? '7d';
+
+    return this.parseJwtDurationToMs(expiresIn) ?? 7 * 24 * 60 * 60 * 1000;
+  }
+
+  private parseJwtDurationToMs(value: string): number | null {
+    const normalized = value.trim();
+    if (/^\d+$/.test(normalized)) {
+      return Number(normalized) * 1000;
+    }
+
+    const match = /^(\d+)([smhd])$/i.exec(normalized);
+    if (!match) {
+      return null;
+    }
+
+    const amount = Number(match[1]);
+    const unit = match[2].toLowerCase();
+    const multipliers: Record<string, number> = {
+      s: 1000,
+      m: 60 * 1000,
+      h: 60 * 60 * 1000,
+      d: 24 * 60 * 60 * 1000,
+    };
+
+    return amount * multipliers[unit];
   }
 }

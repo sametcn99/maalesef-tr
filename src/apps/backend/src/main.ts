@@ -10,6 +10,7 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app/app.module.js';
 import { RedisIoAdapter } from './common/websockets/redis-io.adapter.js';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js';
 import {
   createOriginValidator,
   getAllowedOrigins,
@@ -63,6 +64,7 @@ class Main {
     configService,
   }: BootstrapContext): void {
     this.setupValidation(app);
+    app.useGlobalFilters(new AllExceptionsFilter());
     this.setupCors(app, configService);
     this.setupSecurity(app);
     app.use(cookieParser());
@@ -85,10 +87,7 @@ class Main {
   }
 
   private isDocsEnabled(configService: ConfigService): boolean {
-    return (
-      configService.get<boolean>('ENABLE_API_DOCS') ??
-      configService.get<string>('NODE_ENV') !== 'production'
-    );
+    return configService.get<boolean>('ENABLE_API_DOCS') === true;
   }
 
   private createSwaggerDocument(app: INestApplication): OpenAPIObject {

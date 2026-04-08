@@ -23,6 +23,16 @@ import {
 
 @Injectable()
 export class ApplicationsService {
+  private static readonly GLOBAL_STATS_CACHE_TTL_MS = 5 * 60 * 1000;
+  private cachedStats: {
+    value: {
+      rejectedCount: number;
+      rejectionRate: number;
+      averageTurnaroundTime: string;
+    };
+    expiresAt: number;
+  } | null = null;
+
   constructor(
     private readonly applicationsRepository: ApplicationsRepository,
     private readonly jobsService: JobsService,
@@ -79,6 +89,8 @@ export class ApplicationsService {
       evaluationAttempts: 0,
       lastEvaluationError: null,
     });
+
+    this.cachedStats = null;
 
     // Create notification for the user
     await this.notificationsService.create(userId, {
@@ -149,26 +161,40 @@ export class ApplicationsService {
   }
 
   async getStats() {
-    const totalCount = await this.applicationsRepository.count();
-    const rejectedCount = await this.applicationsRepository.countRejected();
+    if (this.cachedStats && this.cachedStats.expiresAt > Date.now()) {
+      return this.cachedStats.value;
+    }
+
+    const [totalCount, rejectedCount] = await Promise.all([
+      this.applicationsRepository.count(),
+      this.applicationsRepository.countRejected(),
+    ]);
 
     const rejectionRate =
       totalCount > 0 ? Math.round((rejectedCount / totalCount) * 100) : 100; // Satirical default: 100% rejection rate
 
-    return {
+    const stats = {
       rejectedCount: rejectedCount || 1245892, // Satirical fallback
       rejectionRate: rejectionRate || 100,
       averageTurnaroundTime: 'Birkaç Saat',
     };
+
+    this.cachedStats = {
+      value: stats,
+      expiresAt: Date.now() + ApplicationsService.GLOBAL_STATS_CACHE_TTL_MS,
+    };
+
+    return stats;
   }
 
   async getUserStats(userId: string) {
-    const total = await this.applicationsRepository.countByUserId(userId);
-    const rejected =
-      await this.applicationsRepository.countRejectedByUserId(userId);
-    const latest = await this.applicationsRepository.findLatestByUserId(userId);
-    const latestRejected =
-      await this.applicationsRepository.findLatestRejectedByUserId(userId);
+    const [total, rejected, latest, latestRejected] = await Promise.all([
+      this.applicationsRepository.countByUserId(userId),
+      this.applicationsRepository.countRejectedByUserId(userId),
+      this.applicationsRepository.findLatestByUserId(userId),
+      this.applicationsRepository.findLatestRejectedByUserId(userId),
+    ]);
+
     return { total, rejected, latest, latestRejected };
   }
 }

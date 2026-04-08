@@ -6,6 +6,8 @@ import {
   Matches,
 } from 'class-validator';
 import {
+  getPasswordMaxBytesMessage,
+  MaxPasswordUtf8Bytes,
   PASSWORD_MIN_LENGTH,
   PASSWORD_REGEX,
   PASSWORD_VALIDATION_MESSAGE,
@@ -21,6 +23,9 @@ export class ResetPasswordDto {
   })
   @Matches(PASSWORD_REGEX, {
     message: `Yeni ${PASSWORD_VALIDATION_MESSAGE.toLowerCase()}`,
+  })
+  @MaxPasswordUtf8Bytes({
+    message: getPasswordMaxBytesMessage('Yeni şifre'),
   })
   @IsNotEmpty({ message: 'Yeni şifre gereklidir.' })
   newPassword!: string;

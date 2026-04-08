@@ -11,11 +11,12 @@ export const envValidationSchema = Joi.object({
   DB_PASSWORD: Joi.string().required(),
   DB_NAME: Joi.string().required(),
   JWT_SECRET: Joi.string().required(),
+  JWT_REFRESH_SECRET: Joi.string().required(),
   JWT_EXPIRES_IN: Joi.string().required(),
   JWT_REFRESH_EXPIRES_IN: Joi.string().default('7d'),
   GOOGLE_AI_API_KEY: Joi.string().optional(),
   GOOGLE_AI_MODEL: Joi.string(),
-  ENABLE_API_DOCS: Joi.boolean().optional(),
+  ENABLE_API_DOCS: Joi.boolean().default(false),
   CORS_ORIGIN: Joi.string().default('http://localhost:3000'),
   REDIS_URL: Joi.string()
     .pattern(/^rediss?:\/\//)
@@ -34,5 +35,5 @@ export const envValidationSchema = Joi.object({
   // Seed (Admin)
   ADMIN_EMAIL: Joi.string().email().default('admin@maalesef.tr'),
   ADMIN_NAME: Joi.string().default('admin'),
-  ADMIN_PASSWORD: Joi.string().default('admin123'),
+  ADMIN_PASSWORD: Joi.string().min(12).required(),
 });

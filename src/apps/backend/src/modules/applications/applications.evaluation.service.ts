@@ -1,25 +1,19 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import type {
-  GenerativeModel,
-  GenerateContentResult,
-  Part,
-} from '@google/generative-ai';
 import { TemplateRendererService } from '../../common/templates/template-renderer.service.js';
 import { ApplicationsRepository } from './applications.repository.js';
 import {
   Application,
   ApplicationStatus,
 } from './entities/application.entity.js';
-import { JobsService } from '../jobs/jobs.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { UsersService } from '../users/users.service.js';
 import { MailService } from '../mail/mail.service.js';
 import { BadgesService } from '../badges/badges.service.js';
 import { BadgeType } from '../badges/entities/user-badge.entity.js';
 import { JobQuestion } from '../jobs/entities/job.entity.js';
+import { ApplicationEvaluationAiService } from './application-evaluation-ai.service.js';
 import {
   DEV_CRON_EXPRESSION,
   PROD_CRON_EXPRESSION,
@@ -30,21 +24,17 @@ import {
 @Injectable()
 export class ApplicationsEvaluationService implements OnModuleInit {
   private readonly logger = new Logger(ApplicationsEvaluationService.name);
-  private readonly model: string;
-  private genAI: GoogleGenerativeAI | null = null;
 
   constructor(
     private readonly applicationsRepository: ApplicationsRepository,
-    private readonly jobsService: JobsService,
     private readonly notificationsService: NotificationsService,
     private readonly usersService: UsersService,
     private readonly mailService: MailService,
     private readonly badgesService: BadgesService,
     private readonly configService: ConfigService<Record<string, string>>,
     private readonly templateRenderer: TemplateRendererService,
-  ) {
-    this.model = this.configService.getOrThrow<string>('GOOGLE_AI_MODEL');
-  }
+    private readonly applicationEvaluationAiService: ApplicationEvaluationAiService,
+  ) {}
 
   private static readonly CRON_EXPR =
     process.env.NODE_ENV === 'production'
@@ -55,13 +45,8 @@ export class ApplicationsEvaluationService implements OnModuleInit {
 
   @Cron(ApplicationsEvaluationService.CRON_EXPR)
   async handleDueApplications() {
-    const apiKey = this.configService.get<string>('GOOGLE_AI_API_KEY');
-    if (!apiKey) {
+    if (!this.applicationEvaluationAiService.isEnabled()) {
       return; // AI evaluation is disabled
-    }
-
-    if (!this.genAI) {
-      this.genAI = new GoogleGenerativeAI(apiKey);
     }
 
     const now = new Date();
@@ -97,13 +82,22 @@ export class ApplicationsEvaluationService implements OnModuleInit {
     }
 
     try {
-      const job = await this.jobsService
-        .findById(application.jobId)
-        .catch(() => null);
+      const prompt = await this.buildPrompt(
+        application,
+        application.job
+          ? {
+              title: application.job.title,
+              company: application.job.company,
+              location: application.job.location,
+              fullDescription: application.job.fullDescription,
+              requirements: application.job.requirements,
+              questions: application.job.questions,
+            }
+          : undefined,
+      );
 
-      const prompt = await this.buildPrompt(application, job ?? undefined);
-
-      const text = await this.callGemini(prompt);
+      const text =
+        await this.applicationEvaluationAiService.generateFeedback(prompt);
 
       if (!text) {
         throw new Error('Model boş yanıt döndürdü');
@@ -204,59 +198,6 @@ export class ApplicationsEvaluationService implements OnModuleInit {
     ]);
 
     return { systemPrompt, userPrompt };
-  }
-
-  private async callGemini(prompt: {
-    systemPrompt: string;
-    userPrompt: string;
-  }): Promise<string> {
-    if (!this.genAI) {
-      throw new Error('Gemini client not initialized');
-    }
-
-    const model: GenerativeModel = this.genAI.getGenerativeModel({
-      model: this.model,
-    });
-
-    const result: GenerateContentResult = await model.generateContent({
-      systemInstruction: {
-        role: 'system',
-        parts: [{ text: prompt.systemPrompt }],
-      },
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            {
-              text: prompt.userPrompt,
-            },
-          ],
-        },
-      ],
-      generationConfig: {
-        temperature: 0.8,
-      },
-    });
-
-    const candidate = result.response?.candidates?.[0];
-    const finish = candidate?.finishReason
-      ? String(candidate.finishReason)
-      : undefined;
-    if (finish && finish !== 'STOP') {
-      throw new Error(`Gemini yanıtı tamamlanmadı: ${finish}`);
-    }
-
-    const contentParts: Part[] = candidate?.content?.parts ?? [];
-    const text = contentParts
-      .map((p) => p.text ?? '')
-      .filter((t) => Boolean(t))
-      .join('\n')
-      .trim();
-
-    if (!text) {
-      throw new Error('Gemini boş yanıt döndürdü');
-    }
-    return text;
   }
 
   private trimText(value: string, maxLength: number) {

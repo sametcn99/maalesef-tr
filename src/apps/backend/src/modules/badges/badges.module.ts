@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserBadge } from './entities/user-badge.entity.js';
 import { BadgesService } from './badges.service.js';
@@ -11,7 +11,7 @@ import { UsersModule } from '../users/users.module.js';
   imports: [
     TypeOrmModule.forFeature([UserBadge]),
     NotificationsModule,
-    forwardRef(() => UsersModule),
+    UsersModule,
   ],
   providers: [BadgesService, BadgesRepository],
   controllers: [BadgesController],

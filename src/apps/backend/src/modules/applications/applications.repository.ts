@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, LessThanOrEqual, Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import {
   Application,
   ApplicationStatus,
@@ -47,23 +47,29 @@ export class ApplicationsRepository {
   }
 
   async findDueForEvaluation(now: Date, limit = 25): Promise<Application[]> {
-    return this.repository.find({
-      where: [
-        {
-          status: ApplicationStatus.PENDING,
-          feedback: IsNull(),
-          evaluationDueAt: LessThanOrEqual(now),
-          nextEvaluationAt: IsNull(),
-        },
-        {
-          status: ApplicationStatus.PENDING,
-          feedback: IsNull(),
-          nextEvaluationAt: LessThanOrEqual(now),
-        },
-      ],
-      order: { appliedAt: 'ASC' },
-      take: limit,
-    });
+    return this.repository
+      .createQueryBuilder('application')
+      .leftJoinAndSelect('application.job', 'job')
+      .where('application.status = :status', {
+        status: ApplicationStatus.PENDING,
+      })
+      .andWhere('application.feedback IS NULL')
+      .andWhere(
+        new Brackets((query) => {
+          query
+            .where(
+              'application.evaluationDueAt IS NOT NULL AND application.evaluationDueAt <= :now AND application.nextEvaluationAt IS NULL',
+              { now },
+            )
+            .orWhere(
+              'application.nextEvaluationAt IS NOT NULL AND application.nextEvaluationAt <= :now',
+              { now },
+            );
+        }),
+      )
+      .orderBy('application.appliedAt', 'ASC')
+      .take(limit)
+      .getMany();
   }
 
   async save(application: Application): Promise<Application> {

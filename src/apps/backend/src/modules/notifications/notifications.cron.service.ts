@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { UsersRepository } from '../users/users.repository.js';
 import { NotificationsRepository } from './notifications.repository.js';
 import { MailService } from '../mail/mail.service.js';
+import type { NotificationEntity } from './entities/notification.entity.js';
 
 @Injectable()
 export class NotificationsCronService {
@@ -26,10 +27,14 @@ export class NotificationsCronService {
       `Found ${eligibleUsers.length} users eligible for notification emails.`,
     );
 
+    const unreadByUserId = this.groupUnreadByUserId(
+      await this.notificationsRepository.findUnreadForUserIds(
+        eligibleUsers.map((user) => user.id),
+      ),
+    );
+
     for (const user of eligibleUsers) {
-      const unreadNotifications =
-        await this.notificationsRepository.findByUserId(user.id);
-      const unreadOnly = unreadNotifications.filter((n) => !n.read);
+      const unreadOnly = unreadByUserId.get(user.id) ?? [];
 
       if (unreadOnly.length > 0) {
         await this.mailService.sendNotificationSummary(
@@ -51,5 +56,17 @@ export class NotificationsCronService {
         );
       }
     }
+  }
+
+  private groupUnreadByUserId(notifications: NotificationEntity[]) {
+    const grouped = new Map<string, NotificationEntity[]>();
+
+    for (const notification of notifications) {
+      const existing = grouped.get(notification.userId) ?? [];
+      existing.push(notification);
+      grouped.set(notification.userId, existing);
+    }
+
+    return grouped;
   }
 }

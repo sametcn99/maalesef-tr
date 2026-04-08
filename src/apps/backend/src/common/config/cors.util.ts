@@ -14,7 +14,7 @@ export function isOriginAllowed(
   }
 
   if (allowedOrigins.length === 0) {
-    return true;
+    return false;
   }
 
   return allowedOrigins.includes(origin);

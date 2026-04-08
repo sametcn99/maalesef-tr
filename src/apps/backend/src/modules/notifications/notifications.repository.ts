@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { NotificationEntity } from './entities/notification.entity.js';
 
 @Injectable()
@@ -19,6 +19,24 @@ export class NotificationsRepository {
     return this.repository.find({
       where: { userId },
       order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findUnreadForUserIds(userIds: string[]): Promise<NotificationEntity[]> {
+    if (userIds.length === 0) {
+      return [];
+    }
+
+    return this.repository.find({
+      where: {
+        userId: In(userIds),
+        read: false,
+      },
+      order: {
+        userId: 'ASC',
+        priority: 'DESC',
+        createdAt: 'DESC',
+      },
     });
   }
 
