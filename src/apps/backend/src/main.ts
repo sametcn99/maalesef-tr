@@ -9,11 +9,17 @@ import type { Request, Response } from 'express';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app/app.module.js';
-import { AppSocketIoAdapter } from './app/socket-io.adapter.js';
+import { RedisIoAdapter } from './common/websockets/redis-io.adapter.js';
 import {
   createOriginValidator,
   getAllowedOrigins,
 } from './common/config/cors.util.js';
+
+interface BootstrapContext {
+  app: INestApplication;
+  configService: ConfigService;
+  port: number;
+}
 
 class Main {
   private readonly logger = new Logger('Bootstrap');
@@ -21,31 +27,68 @@ class Main {
   private readonly swaggerJsonPath = 'openapi.json';
 
   async bootstrap(): Promise<void> {
-    const app = await NestFactory.create(AppModule);
+    const context = await this.createContext();
+
+    this.setupDocumentation(context);
+    this.configureHttpPipeline(context);
+    await this.configureWebSockets(context);
+    await this.startServer(context);
+  }
+
+  private async createContext(): Promise<BootstrapContext> {
+    const app: INestApplication = await NestFactory.create(AppModule);
     const configService = app.get(ConfigService);
     const port = configService.getOrThrow<number>('PORT');
-    const socketIoAdapter = new AppSocketIoAdapter(app, configService);
-    const isDocsEnabled =
-      configService.get<boolean>('ENABLE_API_DOCS') ??
-      configService.get<string>('NODE_ENV') !== 'production';
 
-    if (isDocsEnabled) {
-      const document = this.createSwaggerDocument(app);
-      this.setupOpenApiJsonEndpoint(app, document);
-      this.setupScalarReference(app);
-      this.logger.log(`API docs enabled at /${this.swaggerPath}`);
+    return {
+      app,
+      configService,
+      port,
+    };
+  }
+
+  private setupDocumentation({ app, configService }: BootstrapContext): void {
+    if (!this.isDocsEnabled(configService)) {
+      return;
     }
 
+    const document = this.createSwaggerDocument(app);
+    this.setupOpenApiJsonEndpoint(app, document);
+    this.setupScalarReference(app);
+    this.logger.log(`API docs enabled at /${this.swaggerPath}`);
+  }
+
+  private configureHttpPipeline({
+    app,
+    configService,
+  }: BootstrapContext): void {
     this.setupValidation(app);
-    this.setupCors(app);
+    this.setupCors(app, configService);
     this.setupSecurity(app);
     app.use(cookieParser());
-    await socketIoAdapter.connectToRedis();
-    app.useWebSocketAdapter(socketIoAdapter);
+  }
 
+  private async configureWebSockets({
+    app,
+    configService,
+  }: BootstrapContext): Promise<void> {
+    const webSocketAdapter = new RedisIoAdapter(app, configService);
+
+    await webSocketAdapter.connectToRedis();
+    app.useWebSocketAdapter(webSocketAdapter);
+  }
+
+  private async startServer({ app, port }: BootstrapContext): Promise<void> {
     await app.listen(port, '0.0.0.0');
 
     this.logger.log(`Backend running on http://0.0.0.0:${port}`);
+  }
+
+  private isDocsEnabled(configService: ConfigService): boolean {
+    return (
+      configService.get<boolean>('ENABLE_API_DOCS') ??
+      configService.get<string>('NODE_ENV') !== 'production'
+    );
   }
 
   private createSwaggerDocument(app: INestApplication): OpenAPIObject {
@@ -97,8 +140,7 @@ class Main {
     );
   }
 
-  private setupCors(app: INestApplication): void {
-    const configService = app.get(ConfigService);
+  private setupCors(app: INestApplication, configService: ConfigService): void {
     const allowedOrigins = getAllowedOrigins(
       configService.get<string>('CORS_ORIGIN'),
     );

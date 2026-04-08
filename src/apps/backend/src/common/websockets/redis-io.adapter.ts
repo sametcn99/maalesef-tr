@@ -1,16 +1,16 @@
 import { Logger, type INestApplicationContext } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient, type RedisClientType } from 'redis';
 import type { Server, ServerOptions } from 'socket.io';
-import { ConfigService } from '@nestjs/config';
 import {
   createOriginValidator,
   getAllowedOrigins,
-} from '../common/config/cors.util.js';
+} from '../config/cors.util.js';
 
-export class AppSocketIoAdapter extends IoAdapter {
-  private readonly logger = new Logger(AppSocketIoAdapter.name);
+export class RedisIoAdapter extends IoAdapter {
+  private readonly logger = new Logger(RedisIoAdapter.name);
   private readonly allowedOrigins: string[];
   private redisAdapterConstructor?: ReturnType<typeof createAdapter>;
   private redisPubClient?: RedisClientType;
