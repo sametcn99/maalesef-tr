@@ -1,4 +1,4 @@
-import { Logger, type INestApplicationContext } from '@nestjs/common';
+import { Logger, type INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
@@ -17,10 +17,10 @@ export class RedisIoAdapter extends IoAdapter {
   private redisSubClient?: RedisClientType;
 
   constructor(
-    app: INestApplicationContext,
+    app: INestApplication,
     private readonly configService: ConfigService,
   ) {
-    super(app);
+    super(app.getHttpServer() as object);
     this.allowedOrigins = getAllowedOrigins(
       this.configService.get<string>('CORS_ORIGIN'),
     );

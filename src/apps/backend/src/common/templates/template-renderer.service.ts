@@ -1,127 +1,43 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import Handlebars from 'handlebars';
+import { TemplateRegistryService } from './template-registry.service.js';
 
 type TemplateContext = Record<string, unknown>;
 type CompiledTemplate = (context: TemplateContext) => string;
 
 @Injectable()
-export class TemplateRendererService implements OnModuleInit {
+export class TemplateRendererService implements OnApplicationBootstrap {
   private readonly logger = new Logger(TemplateRendererService.name);
   private readonly templates = new Map<string, CompiledTemplate>();
-  private readonly templateFiles = new Map<string, string>([
-    [
-      'mail/email-verification.html.hbs',
-      join(
-        import.meta.dirname,
-        '../../modules/mail/templates/email-verification.html.hbs',
-      ),
-    ],
-    [
-      'mail/email-verification.txt.hbs',
-      join(
-        import.meta.dirname,
-        '../../modules/mail/templates/email-verification.txt.hbs',
-      ),
-    ],
-    [
-      'mail/password-reset.html.hbs',
-      join(
-        import.meta.dirname,
-        '../../modules/mail/templates/password-reset.html.hbs',
-      ),
-    ],
-    [
-      'mail/password-reset.txt.hbs',
-      join(
-        import.meta.dirname,
-        '../../modules/mail/templates/password-reset.txt.hbs',
-      ),
-    ],
-    [
-      'mail/notification-summary.html.hbs',
-      join(
-        import.meta.dirname,
-        '../../modules/mail/templates/notification-summary.html.hbs',
-      ),
-    ],
-    [
-      'mail/notification-summary.txt.hbs',
-      join(
-        import.meta.dirname,
-        '../../modules/mail/templates/notification-summary.txt.hbs',
-      ),
-    ],
-    [
-      'mail/rejection.html.hbs',
-      join(
-        import.meta.dirname,
-        '../../modules/mail/templates/rejection.html.hbs',
-      ),
-    ],
-    [
-      'mail/rejection.txt.hbs',
-      join(
-        import.meta.dirname,
-        '../../modules/mail/templates/rejection.txt.hbs',
-      ),
-    ],
-    [
-      'prompts/application-evaluation-system.md.hbs',
-      join(
-        import.meta.dirname,
-        '../../modules/applications/templates/application-evaluation-system.md.hbs',
-      ),
-    ],
-    [
-      'prompts/application-evaluation-user.md.hbs',
-      join(
-        import.meta.dirname,
-        '../../modules/applications/templates/application-evaluation-user.md.hbs',
-      ),
-    ],
-  ]);
-  private loadPromise: Promise<void> | null = null;
+  constructor(private readonly templateRegistry: TemplateRegistryService) {}
 
-  async onModuleInit() {
-    await this.ensureLoaded();
+  async onApplicationBootstrap() {
+    await this.preloadTemplates();
   }
 
   async renderMailHtml(templateName: string, context: TemplateContext) {
-    await this.ensureLoaded();
     return this.render(`mail/${templateName}.html.hbs`, context);
   }
 
   async renderMailText(templateName: string, context: TemplateContext) {
-    await this.ensureLoaded();
     return this.render(`mail/${templateName}.txt.hbs`, context);
   }
 
   async renderMarkdown(templateName: string, context: TemplateContext) {
-    await this.ensureLoaded();
     return this.render(`prompts/${templateName}.md.hbs`, context);
   }
 
-  private async ensureLoaded() {
-    if (this.templates.size > 0) {
+  private async preloadTemplates() {
+    const templateEntries = this.templateRegistry.entries();
+
+    if (!templateEntries.length) {
+      this.logger.warn('No templates registered');
       return;
     }
 
-    if (!this.loadPromise) {
-      this.loadPromise = this.preloadTemplates();
-    }
-
-    await this.loadPromise;
-  }
-
-  private async preloadTemplates() {
-    if (!this.templateFiles.size) {
-      throw new Error('No template files configured');
-    }
-
     await Promise.all(
-      [...this.templateFiles.entries()].map(([templateKey, filePath]) =>
+      templateEntries.map(([templateKey, filePath]) =>
         this.loadTemplate(templateKey, filePath),
       ),
     );
@@ -140,7 +56,23 @@ export class TemplateRendererService implements OnModuleInit {
     );
   }
 
-  private render(templateKey: string, context: TemplateContext) {
+  private async ensureTemplateLoaded(templateKey: string) {
+    if (this.templates.has(templateKey)) {
+      return;
+    }
+
+    const filePath = this.templateRegistry.get(templateKey);
+
+    if (!filePath) {
+      throw new Error(`Template is not registered: ${templateKey}`);
+    }
+
+    await this.loadTemplate(templateKey, filePath);
+  }
+
+  private async render(templateKey: string, context: TemplateContext) {
+    await this.ensureTemplateLoaded(templateKey);
+
     const template = this.templates.get(templateKey);
 
     if (!template) {

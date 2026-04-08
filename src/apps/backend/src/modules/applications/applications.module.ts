@@ -11,6 +11,7 @@ import { TemplateModule } from '../../common/templates/template.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { MailModule } from '../mail/mail.module.js';
 import { BadgesModule } from '../badges/badges.module.js';
+import { ApplicationTemplatesRegistrar } from './application-templates.registrar.js';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { BadgesModule } from '../badges/badges.module.js';
   ],
   controllers: [ApplicationsController],
   providers: [
+    ApplicationTemplatesRegistrar,
     ApplicationsService,
     ApplicationsRepository,
     ApplicationsEvaluationService,
