@@ -17,6 +17,9 @@ export const envValidationSchema = Joi.object({
   GOOGLE_AI_MODEL: Joi.string(),
   ENABLE_API_DOCS: Joi.boolean().optional(),
   CORS_ORIGIN: Joi.string().default('http://localhost:3000'),
+  REDIS_URL: Joi.string()
+    .pattern(/^rediss?:\/\//)
+    .optional(),
   SERVICE_URL_FRONTEND: Joi.string().uri().required(),
   SERVICE_URL_BACKEND: Joi.string().uri().required(),
   DB_SYNCHRONIZE: Joi.boolean().default(false),

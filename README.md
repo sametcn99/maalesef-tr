@@ -11,6 +11,7 @@
 - **Yapay Zeka Destekli Değerlendirme:** Gemini Flash ile başvurular otomatik değerlendirilir ve sistematik olarak reddedilir.
 - **Profil ve Rozet Sistemi:** Platformdaki etkileşimlerinize (paylaşım, değerlendirme vb.) göre özel rozetler kazanın ve profilinizi özelleştirin.
 - **Milestone Bildirimleri:** Başvuru sayınız veya topluluk etkileşimleriniz belirli bir seviyeye ulaştığında anında haberdar olun.
+- **Gerçek Zamanlı Bildirimler:** Giriş yapan kullanıcılar yeni bildirimleri websocket üzerinden sayfa yenilemeden alır.
 
 ## Teknoloji Yığını
 
@@ -19,7 +20,7 @@ Bu proje modern bir monorepo mimarisi üzerine kurulu olup aşağıdaki teknoloj
 - **Runtime:** [Bun](https://bun.sh)
 - **Paket Yönetimi & Monorepo:** TurboRepo Workspaces
 - **Frontend:** Next.js 16 (App Router), React 19, Tailwind CSS v4, Radix UI Themes, Framer Motion
-- **Backend:** NestJS, TypeORM, PostgreSQL, Passport JWT
+- **Backend:** NestJS, TypeORM, PostgreSQL, Passport JWT, Socket.IO
 - **AI:** Google Generative AI (Gemini Flash)
 - **Linter & Formatter:** Biome (Frontend), ESLint & Prettier (Backend)
 
@@ -35,7 +36,7 @@ src/apps/frontend  -> Next.js uygulaması (App Router)
 ### Gereksinimler
 
 - [Bun](https://bun.sh/docs/installation) yüklü olmalıdır (v1.3.8+ önerilir).
-- Docker ve Docker Compose (en azından PostgreSQL için).
+- Docker ve Docker Compose (PostgreSQL ve Redis için).
 
 ### Kurulum
 
@@ -60,10 +61,10 @@ src/apps/frontend  -> Next.js uygulaması (App Router)
 
    Geliştirme için `.env.example` içeriği başlangıçta yeterlidir.
 
-4. Veritabanını başlatın (lokal geliştirme):
+4. Altyapı servislerini başlatın (lokal geliştirme):
 
    ```bash
-   docker compose up -d db
+   docker compose up -d db redis
    ```
 
 ### Geliştirme Modunda Çalıştırma
@@ -87,10 +88,11 @@ Varsayılan adresler:
 - Frontend: `http://localhost:3000`
 - Backend: `http://localhost:3001`
 - API Docs (aktifse): `http://localhost:3001/docs`
+- Redis: `redis://localhost:6379`
 
 ## Docker ile Tam Çalıştırma (Production Benzeri)
 
-Tüm servisleri (db + backend + frontend) container olarak kaldırmak için:
+Tüm servisleri (db + redis + backend + frontend) container olarak kaldırmak için:
 
 ```bash
 docker compose up -d --build
@@ -110,6 +112,7 @@ docker compose up -d --build
 `.env.example` dosyası referans alınmalıdır. Kritik değişkenler:
 
 - Backend: `PORT`, `DB_*`, `JWT_*`, `SERVICE_URL_BACKEND`, `CORS_ORIGIN`, `SMTP_*`, `MAIL_FROM`
+- Realtime: `REDIS_URL`
 - AI: `GOOGLE_AI_API_KEY`, `GOOGLE_AI_MODEL`
 - Frontend build-time: `NEXT_PUBLIC_API_URL`
 
@@ -118,6 +121,7 @@ Notlar:
 - `GOOGLE_AI_API_KEY` verilmezse AI değerlendirme akışı pasif kalır.
 - Backend migration’lar uygulama açılışında otomatik çalışır (`migrationsRun: true`).
 - API dokümantasyonu `ENABLE_API_DOCS=true` iken `/docs` ve `/openapi.json` üzerinden sunulur.
+- `REDIS_URL` tanımlıysa websocket yayınları çoklu backend instance arasında senkronize edilir; tanımlı değilse sistem tek instance modunda çalışır.
 
 ## Lisans
 

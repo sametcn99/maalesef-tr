@@ -15,6 +15,7 @@ interface NotificationsStoreState {
   error: string | null;
   hasFetched: boolean;
   fetchNotifications: (options?: { force?: boolean }) => Promise<void>;
+  upsertNotification: (notification: Notification) => void;
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   reset: () => void;
@@ -61,6 +62,30 @@ export const useNotificationsStore = create<NotificationsStoreState>(
           error: getErrorMessage(error, "Bildirimler yüklenemedi"),
         });
       }
+    },
+
+    upsertNotification: (notification) => {
+      set((state) => {
+        const index = state.notifications.findIndex(
+          (entry) => entry.id === notification.id,
+        );
+
+        if (index === -1) {
+          return {
+            error: null,
+            notifications: [notification, ...state.notifications],
+          };
+        }
+
+        return {
+          error: null,
+          notifications: state.notifications.map((entry) =>
+            entry.id === notification.id
+              ? { ...entry, ...notification }
+              : entry,
+          ),
+        };
+      });
     },
 
     markAsRead: async (id) => {

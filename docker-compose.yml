@@ -14,6 +14,17 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+
   backend:
     build:
       context: .
@@ -21,6 +32,8 @@ services:
     restart: unless-stopped
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     environment:
       NODE_ENV: production
@@ -35,6 +48,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change-me}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY:-}
       GOOGLE_AI_MODEL: ${GOOGLE_AI_MODEL:-gemini-flash-latest}
       SERVICE_URL_BACKEND: ${SERVICE_URL_BACKEND:-http://localhost:3001}

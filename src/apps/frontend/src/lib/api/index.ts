@@ -1,4 +1,4 @@
-export { setAccessToken } from "./core";
+export { setAccessToken, subscribeToAccessToken } from "./core";
 export * from "./applications";
 export * from "./auth";
 export * from "./badges";

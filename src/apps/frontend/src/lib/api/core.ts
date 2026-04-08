@@ -4,9 +4,24 @@ const BASE_URL = env.NEXT_PUBLIC_API_URL;
 
 let accessTokenCache: string | null = null;
 let refreshPromise: Promise<string> | null = null;
+const accessTokenListeners = new Set<(token: string | null) => void>();
 
 export function setAccessToken(token: string | null) {
   accessTokenCache = token;
+
+  accessTokenListeners.forEach((listener) => {
+    listener(token);
+  });
+}
+
+export function subscribeToAccessToken(
+  listener: (token: string | null) => void,
+) {
+  accessTokenListeners.add(listener);
+
+  return () => {
+    accessTokenListeners.delete(listener);
+  };
 }
 
 export async function refreshAccessToken(): Promise<string> {

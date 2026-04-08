@@ -11,6 +11,7 @@ import {
   refresh as apiRefresh,
   register as apiRegister,
   setAccessToken,
+  subscribeToAccessToken,
   updateAuthSettings as apiUpdateSettings,
 } from "@/lib/api";
 
@@ -227,3 +228,16 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
     clearAuthState(set);
   },
 }));
+
+subscribeToAccessToken((accessToken: string | null) => {
+  const state = useAuthStore.getState();
+
+  if (state.accessToken === accessToken) {
+    return;
+  }
+
+  useAuthStore.setState({
+    accessToken,
+    user: accessToken ? state.user : null,
+  });
+});

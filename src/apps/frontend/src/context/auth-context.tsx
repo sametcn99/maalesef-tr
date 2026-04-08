@@ -3,6 +3,7 @@
 import { useEffect, type ReactNode } from "react";
 import { useShallow } from "zustand/react/shallow";
 import type { User } from "@/types";
+import { useNotificationsRealtime } from "@/hooks/use-notifications-realtime";
 import { useAuthStore } from "@/stores/auth-store";
 
 interface AuthContextType {
@@ -34,6 +35,7 @@ interface AuthContextType {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
+  useNotificationsRealtime();
 
   useEffect(() => {
     void initializeAuth();

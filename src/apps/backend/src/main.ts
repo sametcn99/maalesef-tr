@@ -9,6 +9,11 @@ import type { Request, Response } from 'express';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app/app.module.js';
+import { AppSocketIoAdapter } from './app/socket-io.adapter.js';
+import {
+  createOriginValidator,
+  getAllowedOrigins,
+} from './common/config/cors.util.js';
 
 class Main {
   private readonly logger = new Logger('Bootstrap');
@@ -19,6 +24,7 @@ class Main {
     const app = await NestFactory.create(AppModule);
     const configService = app.get(ConfigService);
     const port = configService.getOrThrow<number>('PORT');
+    const socketIoAdapter = new AppSocketIoAdapter(app, configService);
     const isDocsEnabled =
       configService.get<boolean>('ENABLE_API_DOCS') ??
       configService.get<string>('NODE_ENV') !== 'production';
@@ -34,6 +40,8 @@ class Main {
     this.setupCors(app);
     this.setupSecurity(app);
     app.use(cookieParser());
+    await socketIoAdapter.connectToRedis();
+    app.useWebSocketAdapter(socketIoAdapter);
 
     await app.listen(port, '0.0.0.0');
 
@@ -91,32 +99,12 @@ class Main {
 
   private setupCors(app: INestApplication): void {
     const configService = app.get(ConfigService);
-    const raw = configService.get<string>('CORS_ORIGIN') ?? '';
-    const allowedOrigins = raw
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const allowedOrigins = getAllowedOrigins(
+      configService.get<string>('CORS_ORIGIN'),
+    );
 
     app.enableCors({
-      origin: (
-        origin: string | undefined,
-        callback: (err: Error | null, origin?: boolean) => void,
-      ) => {
-        // allow requests with no origin (server-to-server, curl, same-origin)
-        if (!origin) {
-          callback(null, true);
-          return;
-        }
-        if (allowedOrigins.length === 0) {
-          callback(null, true);
-          return;
-        }
-        if (allowedOrigins.includes(origin)) {
-          callback(null, true);
-          return;
-        }
-        callback(new Error('Origin not allowed by CORS'));
-      },
+      origin: createOriginValidator(allowedOrigins),
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
