@@ -352,17 +352,6 @@ export function Header() {
                           <FaLinkedin aria-hidden="true" className="h-5 w-5" />
                           <span className="sr-only">LinkedIn</span>
                         </Link>
-                        <Link
-                          data-umami-event="layout_footer_go_github_maalesef_tr_click"
-                          href="https://sametcc.me/repo/maalesef-tr"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-muted transition-colors hover:text-accent"
-                          title="GitHub"
-                        >
-                          <FaGithub aria-hidden="true" className="h-5 w-5" />
-                          <span className="sr-only">GitHub</span>
-                        </Link>
                       </div>
 
                       <div className="mt-6 grid grid-cols-2 gap-4 text-sm">
