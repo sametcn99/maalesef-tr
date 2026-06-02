@@ -58,11 +58,11 @@ export class JobsRepository {
       .offset((filters.page - 1) * filters.limit)
       .limit(filters.limit);
 
-    const { entities, raw } = await listQuery.getRawAndEntities();
-    const rawRows = raw as Array<Record<string, unknown>>;
+    const { entities, raw } =
+      await listQuery.getRawAndEntities<Record<string, unknown>>();
 
     return {
-      items: this.mapListItems(entities, rawRows),
+      items: this.mapListItems(entities, raw),
       total,
     };
   }
@@ -80,7 +80,7 @@ export class JobsRepository {
       .where('job.id = :id', { id })
       .groupBy('job.id')
       .addGroupBy('user.id')
-      .getRawAndEntities();
+      .getRawAndEntities<Record<string, unknown>>();
 
     const job = entities[0];
     if (!job) return null;
@@ -100,7 +100,7 @@ export class JobsRepository {
       .where('job.slug = :slug', { slug })
       .groupBy('job.id')
       .addGroupBy('user.id')
-      .getRawAndEntities();
+      .getRawAndEntities<Record<string, unknown>>();
 
     const job = entities[0];
     if (!job) return null;
@@ -141,7 +141,7 @@ export class JobsRepository {
       .groupBy('job.id')
       .addGroupBy('user.id')
       .orderBy('job.createdAt', 'DESC')
-      .getRawAndEntities();
+      .getRawAndEntities<Record<string, unknown>>();
 
     return entities.map((job, index) => {
       job.applicantCount = Number(

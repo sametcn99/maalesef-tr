@@ -181,7 +181,7 @@ export class UsersRepository {
     settings: Partial<User['visibilitySettings']>,
   ): Promise<void> {
     await this.repository.update(userId, {
-      visibilitySettings: settings as User['visibilitySettings'],
+      visibilitySettings: settings,
     });
   }
   async findBio(userId: string): Promise<string | null> {
