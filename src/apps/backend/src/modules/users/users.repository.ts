@@ -30,9 +30,11 @@ export class UsersRepository {
   }
 
   async findByIdWithRefreshToken(id: string): Promise<User | null> {
+    // Explicit `refreshToken: true` overrides the column-level
+    // `select: false` declared on User.refreshToken.
     return this.repository.findOne({
       where: { id },
-      select: ['id', 'email', 'refreshToken' as any],
+      select: { id: true, email: true, refreshToken: true },
     });
   }
 
@@ -185,7 +187,7 @@ export class UsersRepository {
   async findBio(userId: string): Promise<string | null> {
     const user = await this.repository.findOne({
       where: { id: userId },
-      select: ['bio'],
+      select: { bio: true },
     });
     return user?.bio ?? null;
   }

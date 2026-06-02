@@ -68,7 +68,10 @@ export class JobsRepository {
   }
 
   async findById(id: string): Promise<Job | null> {
-    return this.repository
+    // TypeORM 1.0 removed loadRelationCountAndMap; getRawAndEntities gives
+    // us the COUNT() addSelect value so we can map it onto the entity
+    // manually (mirrors how findAll() handles applicantCount).
+    const { entities, raw } = await this.repository
       .createQueryBuilder('job')
       .leftJoinAndSelect('job.createdBy', 'user')
       .leftJoin('job.applications', 'application')
@@ -77,12 +80,18 @@ export class JobsRepository {
       .where('job.id = :id', { id })
       .groupBy('job.id')
       .addGroupBy('user.id')
-      .loadRelationCountAndMap('job.applicantCount', 'job.applications')
-      .getOne();
+      .getRawAndEntities();
+
+    const job = entities[0];
+    if (!job) return null;
+    job.applicantCount = Number(
+      raw[0]?.[JobsRepository.APPLICANT_COUNT_ALIAS] ?? 0,
+    );
+    return job;
   }
 
   async findBySlug(slug: string): Promise<Job | null> {
-    return this.repository
+    const { entities, raw } = await this.repository
       .createQueryBuilder('job')
       .leftJoinAndSelect('job.createdBy', 'user')
       .leftJoin('job.applications', 'application')
@@ -91,8 +100,14 @@ export class JobsRepository {
       .where('job.slug = :slug', { slug })
       .groupBy('job.id')
       .addGroupBy('user.id')
-      .loadRelationCountAndMap('job.applicantCount', 'job.applications')
-      .getOne();
+      .getRawAndEntities();
+
+    const job = entities[0];
+    if (!job) return null;
+    job.applicantCount = Number(
+      raw[0]?.[JobsRepository.APPLICANT_COUNT_ALIAS] ?? 0,
+    );
+    return job;
   }
 
   async count(): Promise<number> {
@@ -116,7 +131,7 @@ export class JobsRepository {
   }
 
   async findMineWithCounts(userId: string): Promise<Job[]> {
-    return this.repository
+    const { entities, raw } = await this.repository
       .createQueryBuilder('job')
       .leftJoinAndSelect('job.createdBy', 'user')
       .leftJoin('job.applications', 'application')
@@ -126,8 +141,14 @@ export class JobsRepository {
       .groupBy('job.id')
       .addGroupBy('user.id')
       .orderBy('job.createdAt', 'DESC')
-      .loadRelationCountAndMap('job.applicantCount', 'job.applications')
-      .getMany();
+      .getRawAndEntities();
+
+    return entities.map((job, index) => {
+      job.applicantCount = Number(
+        raw[index]?.[JobsRepository.APPLICANT_COUNT_ALIAS] ?? 0,
+      );
+      return job;
+    });
   }
 
   async deleteById(id: string): Promise<void> {
