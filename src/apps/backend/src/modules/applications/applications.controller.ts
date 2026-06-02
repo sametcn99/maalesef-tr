@@ -31,7 +31,6 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
     data: new Uint8Array(buffer),
     // Disable worker usage in Node to avoid worker bundle resolution issues
     useWorkerFetch: false,
-    isEvalSupported: false,
     disableFontFace: true,
     disableAutoFetch: true,
     disableStream: true,
