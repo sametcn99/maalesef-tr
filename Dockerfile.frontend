@@ -6,11 +6,16 @@ FROM base AS deps
 COPY package.json bun.lock turbo.json tsconfig.json ./
 COPY src/apps/backend/package.json src/apps/backend/package.json
 COPY src/apps/frontend/package.json src/apps/frontend/package.json
-RUN bun install --frozen-lockfile --cwd src/apps/frontend
+RUN bun install --frozen-lockfile --network-concurrency=2 --cwd src/apps/frontend
 
 # Build the Next.js app
 FROM node:22-slim AS builder
 WORKDIR /app
+# Throttle build CPU/memory (see Dockerfile.backend for rationale).
+# Turbopack is the dominant CPU consumer here; it scales workers with
+# os.cpus() unless `experimental.cpus` is set in next.config.ts.
+ENV UV_THREADPOOL_SIZE=2
+ENV NODE_OPTIONS="--max-old-space-size=2048"
 # Bun stores actual packages in /app/node_modules/.bun and links workspace node_modules to it.
 # Copy the store so links inside src/apps/frontend/node_modules resolve correctly.
 COPY --from=deps /app/node_modules/.bun ./node_modules/.bun

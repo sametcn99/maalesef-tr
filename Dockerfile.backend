@@ -6,18 +6,24 @@ FROM base AS deps
 COPY package.json bun.lock turbo.json tsconfig.json ./
 COPY src/apps/backend/package.json src/apps/backend/package.json
 COPY src/apps/frontend/package.json src/apps/frontend/package.json
-RUN bun install --frozen-lockfile --production --cwd src/apps/backend
+RUN bun install --frozen-lockfile --network-concurrency=2 --production --cwd src/apps/backend
 
 # Install all dependencies (including dev) for building
 FROM base AS devdeps
 COPY package.json bun.lock turbo.json tsconfig.json ./
 COPY src/apps/backend/package.json src/apps/backend/package.json
 COPY src/apps/frontend/package.json src/apps/frontend/package.json
-RUN bun install --frozen-lockfile --cwd src/apps/backend
+RUN bun install --frozen-lockfile --network-concurrency=2 --cwd src/apps/backend
 
 # Build the backend
 FROM node:22-slim AS builder
 WORKDIR /app
+# Throttle build CPU/memory so concurrent backend+frontend builds do not
+# saturate small VPSs. tsc (used by nest build) parallelizes file
+# compilation via the libuv threadpool; UV_THREADPOOL_SIZE=2 caps that.
+# NODE_OPTIONS caps V8 heap to avoid OOM-driven swap thrashing.
+ENV UV_THREADPOOL_SIZE=2
+ENV NODE_OPTIONS="--max-old-space-size=2048"
 # Bun stores actual packages in /app/node_modules/.bun and links workspace node_modules to it.
 # Copy the store so links inside src/apps/backend/node_modules resolve correctly.
 COPY --from=devdeps /app/node_modules/.bun ./node_modules/.bun
