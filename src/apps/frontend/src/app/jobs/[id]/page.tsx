@@ -1,5 +1,8 @@
 "use client";
 
+import { use, useCallback, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { JobDetailMainContent } from "@/app/jobs/components/job-detail-main-content";
 import { JobDetailSidebar } from "@/app/jobs/components/job-detail-sidebar";
 import { SimilarJobsSection } from "@/app/jobs/components/similar-jobs-section";
@@ -8,9 +11,6 @@ import { useAuth } from "@/context/auth-context";
 import { useJob, useJobInteractions, useJobs } from "@/hooks";
 import { getRandomJobShareMessage } from "@/lib/job-share-messages";
 import type { Job } from "@/types";
-import { use, useCallback, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 
 export default function JobDetailPage({
   params,
@@ -54,6 +54,10 @@ export default function JobDetailPage({
 
     return shuffled.slice(0, 4);
   }, [jobs, job]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
 
   useEffect(() => {
     if (!job || !isAuthenticated) {
